@@ -282,9 +282,8 @@ USE MULTIPLE CORES:
    And then reloads the entire package anew (which leads to re-compilation)."
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
-  (let ((cores *threads*))
-    (asdf:load-system system-name :force t)
-    (setf *threads* cores)))
+  (save-globals) ;; for persistence of (*debug* *features* *threads*)
+  (asdf:load-system system-name :force t))
 
 
 (declaim (ftype (function () t) solve))  ;function solve located in searcher.lisp
