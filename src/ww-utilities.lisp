@@ -47,19 +47,6 @@
   "Modifies a referenced sequence by sorting it.")
 
 
-
-(defun profile ()
-  "Deterministically profiles Wouldwork."
-  (in-package :cl-user)
-  (sb-profile:reset)
-  (sb-profile:profile "WOULDWORK-PKG")
-  (in-package :ww)
-  (ww::solve)
-  (in-package :cl-user)
-  (sb-profile::report)
-  (in-package :ww))
-
-
 (defun forget (sym)
   "Removes a symbol from the current package."
   (declare (type symbol sym))

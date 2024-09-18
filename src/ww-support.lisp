@@ -21,6 +21,23 @@
   (setf *troubleshoot-current-node* t)
   nil)
 
+#+sbcl
+(defun profile ()
+  "Deterministically profiles Wouldwork."
+  (sb-profile:reset)
+  (sb-profile:profile "WOULDWORK")
+  (solve)
+  (sb-profile:report))
+
+
+#-sbcl
+(defun profile ()
+  "Deterministically profiles Wouldwork."
+  (monitor:reset-all-monitoring)
+  (monitor:monitor-all :ww)
+  (solve)
+  (monitor:report-monitoring :all))   ;(monitor:display-monitoring-results))
+
 
 ;;;;;;;;;;;;; User Functions ;;;;;;;;;;;;;;;;;;;;;;;;;;
 
