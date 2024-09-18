@@ -18,7 +18,6 @@ Another solution to run the app is to build and run a binary (see README).
 
 ;;; Quicklisp is required and assumed to exist in the system
 
-(ql:uninstall :lparallel)  ;sometimes quicklisp loses info about :lparallel after running in parallel mode???
 
 (in-package :cl-user)
 
