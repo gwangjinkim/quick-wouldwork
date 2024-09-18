@@ -25,4 +25,7 @@
            #:*problem-folder-paths*
 	   #:get-src-folder-path
 	   #:add-problem-folder
-           #:remove-problem-folder))
+           #:remove-problem-folder
+           #:save-globals
+           #:read-globals
+           #:*globals-file*))

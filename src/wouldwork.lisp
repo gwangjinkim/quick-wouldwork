@@ -141,6 +141,40 @@ USE MULTIPLE CORES:
 	    while line
 	    do (write-line line out)))))
 
+(defun save-to-file (list filename)
+  (with-open-file (out filename :direction :output :if-exists :supersede :if-does-not-exist :create)
+    (format out "~S" list)))
+
+(defun read-from-file (filename &optional (default '()))
+  (if (probe-file filename)  ; Check if the file exists
+      (with-open-file (in filename :direction :input)
+        (read in))
+      ;; If file doesn't exist, create it with the default values
+      (progn
+        (save-to-file default filename)
+        default)))
+
+(defparameter *globals-file* 
+  (merge-pathnames "vals.lisp" (get-package-root))
+  "In the vals.lisp file of this package the values of 
+   *threads* and *features* are stored as a list.
+   This should preserve when reloading the package for problems
+   the values of these global variables. The user should not
+   have to worry about the changes of these values after reloading.")
+
+(defun save-globals ()
+  "Save the values of the globals (*debug* *features* *threads*) in the vals.lisp file."
+  (save-to-file (list *debug* *features* *threads*) *globals-file*)) ;; this stores global var values
+
+(defun read-globals ()
+  "Read and setf values for (*debug* *features* *threads*) from vals.lisp file."
+  (destructuring-bind 
+    (tmp-debug tmp-features tmp-threads) 
+      (read-from-file *globals-file* (list 0 *features* 0))))
+    (setf *debug* tmp-debug
+          *features* tmp-features
+          *thread* tmp-threads)))   ;; this reads-in global variable values and  sets them
+
 
 ;; -------------------- pathname handling ---------------------------- ;;
 

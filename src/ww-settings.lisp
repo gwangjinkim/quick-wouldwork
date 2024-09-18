@@ -4,7 +4,6 @@
 
 (in-package :ww)
 
-
 ;Note: It is necessary to close & reopen the lisp environment after
 ;      changing here from nonparallel to parallel, or parallel to nonparallel.
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -40,6 +39,11 @@
     4 - display full nodes
     5 - display full nodes + break after each expansion cycle")
 (declaim (type fixnum *debug*))
+
+
+;; after loading set the global values to what was in "vals.lisp"
+(read-globals)
+
 
 
 (defparameter *lock* (bt:make-lock))  ;for thread protection
