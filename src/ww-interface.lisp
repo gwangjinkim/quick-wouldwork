@@ -1,6 +1,12 @@
+;;; Filename: ww-interface.lisp
+
+;;; Misc file handling & test managment functions
+
+
 (in-package :wouldwork)
 
-(defun help ()  ;;; text which appears at the start of the program
+
+(defun help ()  ;;; text which appears if user enters (help)
   (format t "
 ;; --------------------- WOULDWORK (2024) Dave Brown <davypough@gmail.com> ----------------- ;;
 
