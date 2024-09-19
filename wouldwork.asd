@@ -1,45 +1,45 @@
+;;; Filename: wouldwork.asd
+
+;;; ASDF instructions for loading wouldwork
+
+
 (in-package :asdf-user)
 
+
 (defsystem "wouldwork"
-  :author ("Dave Brown <davypough@gmail.com>"
-           "Gwang-Jin Kim <gwang.jin.kim.phd@gmail.com>")
+  :author ("Program Development, Dave Brown <davypough@gmail.com>"
+           "Quicklisp Integration & Test, Gwang-Jin Kim <gwang.jin.kim.phd@gmail.com>")
   :version "0.0.1"
   :license "MIT"
   :description "classical planning with the wouldwork planner"
-  :homepage "https://github.com/davypough/Wouldwork"
-  :bug-tracker "https://github.com/davypough/Wouldwork/issues"
-  :source-control (:git "https://github.com/davypough/Wouldwork.git")
-
-  ;; Dependencies.
+  :homepage "https://github.com/davypough/quick-wouldwork"
+  :bug-tracker "https://github.com/davypough/quick-wouldwork/issues"
+  :source-control (:git "https://github.com/davypough/quick-wouldwork.git")
   :depends-on (:alexandria :iterate :lparallel
-               #-sbcl :cl-custom-hash-table
                #-sbcl :trivial-backtrace
                #-sbcl :metering)
-
-  ;; Project stucture.
   :serial t
   :components ((:module "src"
-                        :serial t
-                        :components ((:file "packages")
-                                     (:file "wouldwork")
-				     (:file "ww-utilities")
-				     (:file "ww-hstack")
-				     (:file "ww-settings")
-				     (:file "ww-structures")
-				     (:file "ww-converter")
-				     (:file "ww-validator")
-				     (:file "ww-frequencies")
-				     (:file "ww-support")
-				     (:file "ww-happenings")
-				     (:file "ww-translator")
-				     (:file "ww-installer")
-				     (:file "ww-set")
-				     (:file "problem")
-				     (:file "ww-searcher")
-				     (:file "ww-planner")
-				     (:file "ww-parallel")
-				     (:file "ww-initialize"))))
-
+                :serial t
+                :components ((:file "packages")
+                             (:file "wouldwork")
+				             (:file "ww-utilities")
+				             (:file "ww-hstack")
+				             (:file "ww-settings")
+				             (:file "ww-structures")
+				             (:file "ww-converter")
+				             (:file "ww-validator")
+				             (:file "ww-frequencies")
+				             (:file "ww-support")
+				             (:file "ww-happenings")
+				             (:file "ww-translator")
+				             (:file "ww-installer")
+				             (:file "ww-set")
+				             (:file "problem")
+				             (:file "ww-searcher")
+				             (:file "ww-planner")
+				             (:file "ww-parallel")
+				             (:file "ww-initialize"))))
   ;; Build a binary:
   ;; don't change this line.
   :build-operation "program-op"
