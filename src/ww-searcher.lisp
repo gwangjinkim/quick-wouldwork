@@ -56,6 +56,8 @@
 #+sbcl   ;use custom hash table for all non-sbcl instead of make-hash-table
 (define-global *closed* (make-hash-table)  ;initialized in dfs
   "Contains the set of closed state idbs for graph search, idb -> (depth time value).")
+#-sbcl
+(define-global *closed* nil)
 
 
 (defun node.state.idb (node)
@@ -143,9 +145,9 @@
                                       :synchronized parallelp))
      #-sbcl
      (if fixed-idb
-       (define-custom-hash-table-constructor make-custom-ht
+       (cl-custom-hash-table:define-custom-hash-table-constructor make-custom-ht
          :test fixed-keys-ht-equal :hash-function fixed-keys-ht-hash)
-       (define-custom-hash-table-constructor make-custom-ht
+       (cl-custom-hash-table:define-custom-hash-table-constructor make-custom-ht
          :test equalp :hash-function sxhash))
      #-sbcl
      (define-global *closed* (make-custom-ht))))
@@ -231,7 +233,7 @@
                (list (node.depth current-node)
                      (problem-state.time (node.state current-node))
                      (problem-state.value (node.state current-node))))
-      #-sbcl (with-custom-hash-table
+      #-sbcl (cl-custom-hash-table:with-custom-hash-table
                (setf (gethash (problem-state.idb (node.state current-node)) *closed*)
                  (list (node.depth current-node)
                        (problem-state.time (node.state current-node))
@@ -288,14 +290,14 @@
               (increment-global *repeated-states*)
               (if (better-than-closed closed-values succ-state succ-depth)  ;succ has better value
                 #+sbcl (remhash succ-idb *closed*)  ;then reactivate on open below
-                #-sbcl (with-custom-hash-table (remhash succ-idb *closed*))
+                #-sbcl (cl-custom-hash-table:with-custom-hash-table (remhash succ-idb *closed*))
                 (progn (finalize-path-depth succ-depth) (next-iteration))))))  ;drop this succ
         (collecting (generate-new-node current-node succ-state))))  ;live successor
 
 
 (defun get-closed-values (succ-idb)
   #+sbcl (gethash succ-idb *closed*)
-  #-sbcl (with-custom-hash-table (gethash succ-idb *closed*)))
+  #-sbcl (cl-custom-hash-table:with-custom-hash-table (gethash succ-idb *closed*)))
 
 
 (defun goal (state)
@@ -657,9 +659,9 @@
         (when (eql *tree-or-graph* 'graph)
           (format t "~%ht count: ~:D    ht size: ~:D"
                   #+sbcl (hash-table-count *closed*)
-                  #-sbcl (with-custom-hash-table (hash-table-count *closed*))
+                  #-sbcl (cl-custom-hash-table:with-custom-hash-table (hash-table-count *closed*))
                   #+sbcl (hash-table-size *closed*)
-                  #-sbcl (with-custom-hash-table (hash-table-size *closed*))))
+                  #-sbcl (cl-custom-hash-table:with-custom-hash-table (hash-table-size *closed*))))
         (format t "~%net average branching factor = ~:D" (round *average-branching-factor*))
         (iter (while (and *rem-init-successors*
                           (not (hs::key-present-hstack (problem-state.idb (node.state (first *rem-init-successors*)))
