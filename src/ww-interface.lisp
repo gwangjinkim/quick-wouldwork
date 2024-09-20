@@ -271,7 +271,7 @@ USE MULTIPLE CORES:
     "problem-triangle-macros.lisp" "problem-triangle-macros-one.lisp"
     "problem-tsp.lisp" "problem-u2.lisp" "problem-donald.lisp"
     "problem-knap4a.lisp" "problem-knap4b.lisp" "problem-knap19.lisp"
-    "problem-smallspace.lisp" "problem-crater.lisp")
+    "problem-smallspace.lisp")  ;"problem-crater.lisp")
   "List of all problem filenames which are correct.")
 
 (defparameter *problem-names* (mapcar (lambda (pn) (strip-name pn "problem-" ".lisp"))

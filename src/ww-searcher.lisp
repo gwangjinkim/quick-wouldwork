@@ -53,10 +53,9 @@
    and hash table of idb -> node.")
 (declaim (hs::hstack *open*))
 
-
+#+sbcl   ;use custom hash table for all non-sbcl instead of make-hash-table
 (define-global *closed* (make-hash-table)  ;initialized in dfs
   "Contains the set of closed state idbs for graph search, idb -> (depth time value).")
-(declaim (hash-table *closed*))
 
 
 (defun node.state.idb (node)
@@ -102,7 +101,7 @@
              ht)
     hash))
 
-
+#+sbcl
 (sb-ext:define-hash-table-test fixed-keys-ht-equal fixed-keys-ht-hash)
 
 
@@ -134,13 +133,22 @@
                                                           :synchronized parallelp)
                                   :keyfn #'node.state.idb))
     (when (eql *tree-or-graph* 'graph)
+      #+sbcl
       (setf *closed* (make-hash-table :test (if fixed-idb
                                               'fixed-keys-ht-equal
                                               'equalp)
                                       :size 100000
                                       ;:rehash-size 2.0
                                       ;:rehash-threshold 0.8
-                                      :synchronized parallelp))))
+                                      :synchronized parallelp))
+     #-sbcl
+     (if fixed-idb
+       (define-custom-hash-table-constructor make-custom-ht
+         :test fixed-keys-ht-equal :hash-function fixed-keys-ht-hash)
+       (define-custom-hash-table-constructor make-custom-ht
+         :test equalp :hash-function sxhash))
+     #-sbcl
+     (define-global *closed* (make-custom-ht))))
   (hs::push-hstack (make-node :state (copy-problem-state *start-state*)) *open*)
   (setf *program-cycles* 0)
   (setf *average-branching-factor* 0.0)
@@ -219,10 +227,15 @@
     (when (eql (bounding-function current-node) 'kill-node)
       (return-from df-bnb1 nil))
     (when (eql *tree-or-graph* 'graph)
-      (setf (gethash (problem-state.idb (node.state current-node)) *closed*)
-            (list (node.depth current-node)
-                  (problem-state.time (node.state current-node))
-                  (problem-state.value (node.state current-node)))))
+      #+sbcl (setf (gethash (problem-state.idb (node.state current-node)) *closed*)
+               (list (node.depth current-node)
+                     (problem-state.time (node.state current-node))
+                     (problem-state.value (node.state current-node))))
+      #-sbcl (with-custom-hash-table
+               (setf (gethash (problem-state.idb (node.state current-node)) *closed*)
+                 (list (node.depth current-node)
+                       (problem-state.time (node.state current-node))
+                       (problem-state.value (node.state current-node))))))
     (let ((succ-states (expand current-node)))  ;from generate-children
       (when *troubleshoot-current-node*
         (setf *debug* 5)
@@ -274,13 +287,15 @@
               (narrate "State previously closed" succ-state succ-depth)
               (increment-global *repeated-states*)
               (if (better-than-closed closed-values succ-state succ-depth)  ;succ has better value
-                (remhash succ-idb *closed*)  ;then reactivate on open below
+                #+sbcl (remhash succ-idb *closed*)  ;then reactivate on open below
+                #-sbcl (with-custom-hash-table (remhash succ-idb *closed*))
                 (progn (finalize-path-depth succ-depth) (next-iteration))))))  ;drop this succ
         (collecting (generate-new-node current-node succ-state))))  ;live successor
 
 
 (defun get-closed-values (succ-idb)
-  (gethash succ-idb *closed*))
+  #+sbcl (gethash succ-idb *closed*)
+  #-sbcl (with-custom-hash-table (gethash succ-idb *closed*)))
 
 
 (defun goal (state)
@@ -641,7 +656,10 @@
         (format t "~%total states processed so far = ~:D" *total-states-processed*)
         (when (eql *tree-or-graph* 'graph)
           (format t "~%ht count: ~:D    ht size: ~:D"
-                  (hash-table-count *closed*) (hash-table-size *closed*)))
+                  #+sbcl (hash-table-count *closed*)
+                  #-sbcl (with-custom-hash-table (hash-table-count *closed*))
+                  #+sbcl (hash-table-size *closed*)
+                  #-sbcl (with-custom-hash-table (hash-table-size *closed*))))
         (format t "~%net average branching factor = ~:D" (round *average-branching-factor*))
         (iter (while (and *rem-init-successors*
                           (not (hs::key-present-hstack (problem-state.idb (node.state (first *rem-init-successors*)))
