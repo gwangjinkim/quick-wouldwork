@@ -324,7 +324,7 @@ USE MULTIPLE CORES:
 						(*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&optional (problem-file "problem.lisp") (cpu-cores *threads*))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -333,9 +333,10 @@ USE MULTIPLE CORES:
 		     (format t "=====================================================~%~%")
 		     (format t "starting to analyze \"~a\"~%~%" problem)
 		     (format t "=====================================================~%~%")
-		     (reload-with-new-problem problem problem-file)
-                     (let ((*threads* cpu-cores))
-		       (solve))
+		     (if with-reload-p
+                         (reload-with-new-problem problem problem-file)
+                         (exchange-problem-file problem problem-file))
+		     (solve)
 		     (format t "=====================================================~%~%")
 		     (format t "problem \"~a\" successfully solved.~%~%" problem)
 		     (format t "=====================================================~%~%"))
@@ -352,13 +353,14 @@ USE MULTIPLE CORES:
 
 
 
-(defun run (problem-name &optional (cpu-cores *threads*))
+(defun run (problem-name &key (with-reload-p t))
   "Loads, reloads and solves a single problem."
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)
-             (reload-with-new-problem problem-name)
-             (let ((*threads* cpu-cores))
-               (solve)))
+             (if with-reload-p
+                 (reload-with-new-problem problem-name)
+                 (exchange-problem-file problem-name)) 
+             (solve))
             (t
              (format t "The problem \"~a\" was not found. Please check spelling (and the path)." problem-name)))))
 
