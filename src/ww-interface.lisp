@@ -137,6 +137,41 @@ USE MULTIPLE CORES:
 		     foundp t)
 	  finally (return (values (if res res default) foundp)))))
 
+;; -------------------- pathname handling ---------------------------- ;;
+      
+(defun get-package-root (system-name)  
+  "Return the root directory of the ASDF system associated with the given package name."
+  (let ((system (asdf:find-system system-name)))
+    (when system
+      (asdf:system-source-directory system))))
+  
+(Defun get-src-folder-path ()
+  (add-dir (get-package-root :wouldwork) "src"))
+   
+(defun add-dir (root dir)
+  "Add to absolute path an additional directory"
+  (merge-pathnames (make-pathname :directory `(:relative ,dir)) root))
+  
+(defun add-file (root file)
+  "Add to absolute path a filename"
+  (merge-pathnames (pathname file) root))
+  
+(defun directory-exists-p (directory)
+  "Returns pathname if the directory exists and is a directory.
+   Currently only works with SBCL - but not CLISP!"
+  (let ((path (pathname directory)))
+    (and (probe-file path)
+         (string-suffix-p "/" (format nil "~a" (probe-file path))))))
+  
+(defun in-src (filename)
+  "Shortcut to add filename to current package directory's src folder"   
+  (add-file (get-src-folder-path) filename))
+
+(defun correct-wildcard (path)
+  "Eliminate unwanted wildcard escape in path strings."
+  (let ((chars (coerce (format nil "~a" path) 'list)))
+    (pathname (coerce (remove-if (lambda (x) (eql #\\ x)) chars) 'string))))
+
 ;; --------------------- file handling ------------------------------- ;;
 
 (defun copy-file-content (source-file target-file)
@@ -161,7 +196,7 @@ USE MULTIPLE CORES:
         default)))
 
 (defparameter *globals-file* 
-  (merge-pathnames "vals.lisp" (get-package-root))
+  (merge-pathnames "vals.lisp" (get-package-root :wouldwork))
   "In the vals.lisp file of this package the values of 
    *threads* and *features* are stored as a list.
    This should preserve when reloading the package for problems
@@ -176,46 +211,11 @@ USE MULTIPLE CORES:
   "Read and setf values for (*debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
     (tmp-debug tmp-features tmp-threads) 
-      (read-from-file *globals-file* (list 0 *features* 0))))
+      (read-from-file *globals-file* (list 0 *features* 0))
     (setf *debug* tmp-debug
           *features* tmp-features
           *thread* tmp-threads)))   ;; this reads-in global variable values and  sets them
 
-
-;; -------------------- pathname handling ---------------------------- ;;
-
-(defun get-package-root (system-name)
-  "Return the root directory of the ASDF system associated with the given package name."
-  (let ((system (asdf:find-system system-name)))
-    (when system
-      (asdf:system-source-directory system))))
-
-(Defun get-src-folder-path ()
-  (add-dir (get-package-root :wouldwork) "src"))
-
-(defun add-dir (root dir)
-  "Add to absolute path an additional directory"
-  (merge-pathnames (make-pathname :directory `(:relative ,dir)) root))
-
-(defun add-file (root file)
-  "Add to absolute path a filename"
-  (merge-pathnames (pathname file) root))
-
-(defun directory-exists-p (directory)
-  "Returns pathname if the directory exists and is a directory.
-   Currently only works with SBCL - but not CLISP!"
-  (let ((path (pathname directory)))
-    (and (probe-file path)
-         (string-suffix-p "/" (format nil "~a" (probe-file path))))))
-
-(defun in-src (filename)
-  "Shortcut to add filename to current package directory's src folder"
-  (add-file (get-src-folder-path) filename))
-
-(defun correct-wildcard (path)
-  "Eliminate unwanted wildcard escape in path strings."
-  (let ((chars (coerce (format nil "~a" path) 'list)))
-    (pathname (coerce (remove-if (lambda (x) (eql #\\ x)) chars) 'string))))
 
 ;; -------------------- problem.lisp file handling ------------------------ ;;
 
@@ -324,7 +324,7 @@ USE MULTIPLE CORES:
 						(*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p nil))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -353,7 +353,7 @@ USE MULTIPLE CORES:
 
 
 
-(defun run (problem-name &key (with-reload-p t))
+(defun run (problem-name &key (with-reload-p nil))
   "Loads, reloads and solves a single problem."
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)

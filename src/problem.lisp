@@ -12,7 +12,7 @@
 
 (ww-set *solution-type* every)
 
-(ww-set *tree-or-graph* graph)  ;tree)  ;note: preferrable to use blocks3a if graph search wanted
+(ww-set *tree-or-graph* tree)  ;note: preferrable to use blocks3a if graph search wanted
 
 
 (define-types
