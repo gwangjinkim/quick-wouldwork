@@ -52,7 +52,7 @@
           Please set *threads* in ww-settings.lisp to 0."))
 
 
-(if (> *debug* 0)
+(if (= *debug* 5)
   (pushnew :ww-debug *features*)
   (setf *features* (remove :ww-debug *features*)))
 
