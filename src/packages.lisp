@@ -28,4 +28,5 @@
            #:remove-problem-folder
            #:save-globals
            #:read-globals
-           #:*globals-file*))
+           #:*globals-file*
+           #:*keep-globals-p*))

@@ -204,17 +204,22 @@ USE MULTIPLE CORES:
    have to worry about the changes of these values after reloading.")
 
 (defun save-globals ()
-  "Save the values of the globals (*debug* *features* *threads*) in the vals.lisp file."
-  (save-to-file (list *debug* *features* *threads*) *globals-file*)) ;; this stores global var values
+  "Save the values of the globals (*keep-globals-p* *debug* *features* *threads*) in the vals.lisp file."
+  (save-to-file (list *keep-globals-p* *debug* *features* *threads*) *globals-file*)) ;; this stores global var values
 
 (defun read-globals ()
   "Read and setf values for (*debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
-    (tmp-debug tmp-features tmp-threads) 
-      (read-from-file *globals-file* (list 0 *features* 0))
-    (setf *debug* tmp-debug
-          *features* tmp-features
-          *thread* tmp-threads)))   ;; this reads-in global variable values and  sets them
+    (keep-globals-p tmp-debug tmp-features tmp-threads) 
+      (read-from-file *globals-file* (list t 0 *features* 0))
+    (when keep-globals-p
+      (setf *keep-globals-p* keep-globals-p
+            *debug* tmp-debug
+            *features* tmp-features
+            *thread* tmp-threads))))   ;; this reads-in global variable values and  sets them
+;; the `keep-globals-p` variable decides over whether the values of `vals.lisp`
+;; get transferred to the current session.
+;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
 
 
 ;; -------------------- problem.lisp file handling ------------------------ ;;
@@ -281,14 +286,18 @@ USE MULTIPLE CORES:
 	 (path (lookup problem-name plist)))
     (copy-file-content path (in-src problem-file))))
 
-(Defun reload-with-new-problem (problem-name &optional (problem-file "problem.lisp") (system-name :wouldwork))
+(Defun reload-with-new-problem (problem-name &key (problem-file "problem.lisp") 
+                                                  (system-name :wouldwork) 
+                                                  (keep-globals-p t))
   "This function is crucial for loading problems.
    Given a problem-name, it replaces the content of the problem.lisp file by
    the content of the correponsing problem file.
-   And then reloads the entire package anew (which leads to re-compilation)."
+   And then reloads the entire package anew (which leads to re-compilation).
+   keep-globals-p determines whether the global variables from the last session should be overtaken."
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
-  (save-globals) ;; for persistence of (*debug* *features* *threads*)
+  (setf *keep-globals-p* keep-globals-p)     ;; permanent memory whether to recreate the state or not after compilation
+  (save-globals)                             ;; for persistence of (*keep-globals-p* *debug* *features* *threads*)
   (asdf:load-system system-name :force t))
 
 
@@ -324,7 +333,7 @@ USE MULTIPLE CORES:
 						(*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p nil))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p nil) (keep-globals-p t))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -334,7 +343,7 @@ USE MULTIPLE CORES:
 		     (format t "starting to analyze \"~a\"~%~%" problem)
 		     (format t "=====================================================~%~%")
 		     (if with-reload-p
-                         (reload-with-new-problem problem problem-file)
+                         (reload-with-new-problem problem problem-file :keep-globals-p keep-globals-p)
                          (exchange-problem-file problem problem-file))
 		     (solve)
 		     (format t "=====================================================~%~%")
@@ -353,12 +362,12 @@ USE MULTIPLE CORES:
 
 
 
-(defun run (problem-name &key (with-reload-p nil))
+(defun run (problem-name &key (with-reload-p nil) (keep-globals-p t))
   "Loads, reloads and solves a single problem."
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)
              (if with-reload-p
-                 (reload-with-new-problem problem-name)
+                 (reload-with-new-problem problem-name :keep-globals-p keep-globals-p)
                  (exchange-problem-file problem-name)) 
              (solve))
             (t
@@ -371,5 +380,3 @@ USE MULTIPLE CORES:
       (loop for name in (list-problem-names)
             do (format t "~a~%" name))
       (list-problem-names)))
-
-

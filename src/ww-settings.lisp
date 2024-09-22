@@ -42,7 +42,8 @@
 
 
 ;; after loading set the global values to what was in "vals.lisp"
-;(read-globals)
+(defvar *keep-globals-p* nil)
+(read-globals)
 
 
 #-sbcl
