@@ -30,7 +30,7 @@
 (declaim (type list *probe*))
 
 
-(defvar *debug* 0
+(defvar *debug* 1
   "Set the debug level for subsequent runs.
     0 - no debugging
     1 - display full search tree
@@ -42,8 +42,18 @@
 
 
 ;; after loading set the global values to what was in "vals.lisp"
-(read-globals)
+;(read-globals)
 
+
+#-sbcl
+(when (> *threads* 0)
+  (error "Note that multi-threading is not available unless running in SBCL.
+          Please set *threads* in ww-settings.lisp to 0."))
+
+
+(if (= *debug* 5)
+  (pushnew :ww-debug *features*)
+  (setf *features* (remove :ww-debug *features*)))
 
 
 (defparameter *lock* (bt:make-lock))  ;for thread protection
