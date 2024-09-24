@@ -333,7 +333,7 @@ USE MULTIPLE CORES:
 						(*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p nil) (keep-globals-p t))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p t))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -343,7 +343,7 @@ USE MULTIPLE CORES:
 		     (format t "starting to analyze \"~a\"~%~%" problem)
 		     (format t "=====================================================~%~%")
 		     (if with-reload-p
-                         (reload-with-new-problem problem problem-file :keep-globals-p keep-globals-p)
+                         (reload-with-new-problem problem :problem-file problem-file :keep-globals-p keep-globals-p)
                          (exchange-problem-file problem problem-file))
 		     (solve)
 		     (format t "=====================================================~%~%")
@@ -362,7 +362,7 @@ USE MULTIPLE CORES:
 
 
 
-(defun run (problem-name &key (with-reload-p nil) (keep-globals-p t))
+(defun run (problem-name &key (with-reload-p t) (keep-globals-p t))
   "Loads, reloads and solves a single problem."
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)
