@@ -222,6 +222,20 @@ USE MULTIPLE CORES:
 ;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
 
 
+;; if vals.lisp is not existent in the package, generate it with default values:
+(unless (probe-file *globals-file*)
+  (let ((*keep-globals-p* nil)
+        (*debug* 0)
+        (*threads* 0))
+    (save-globals)))
+
+(defun toggle-globals ()
+  (if *keep-globals-p*
+      (setf *keep-globals-p* nil)
+      (setf *keep-globals-p* t)))
+
+
+
 ;; -------------------- problem.lisp file handling ------------------------ ;;
 
 (defparameter *problem-folder-paths* (list (get-src-folder-path))

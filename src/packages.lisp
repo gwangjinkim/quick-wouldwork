@@ -29,4 +29,5 @@
            #:save-globals
            #:read-globals
            #:*globals-file*
-           #:*keep-globals-p*))
+           #:*keep-globals-p*
+           #:toggle-globals))
