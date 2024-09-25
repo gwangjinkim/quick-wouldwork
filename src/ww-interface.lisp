@@ -216,7 +216,7 @@ USE MULTIPLE CORES:
       (setf *keep-globals-p* keep-globals-p
             *debug* tmp-debug
             *features* tmp-features
-            *thread* tmp-threads))))   ;; this reads-in global variable values and  sets them
+            *threads* tmp-threads))))   ;; this reads-in global variable values and  sets them
 ;; the `keep-globals-p` variable decides over whether the values of `vals.lisp`
 ;; get transferred to the current session.
 ;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
@@ -232,8 +232,11 @@ USE MULTIPLE CORES:
 (defun toggle-globals ()
   (if *keep-globals-p*
       (setf *keep-globals-p* nil)
-      (setf *keep-globals-p* t)))
+      (setf *keep-globals-p* t))
+  (save-globals))
 
+(defun f () (in-package :ww))
+(f)
 
 
 ;; -------------------- problem.lisp file handling ------------------------ ;;
