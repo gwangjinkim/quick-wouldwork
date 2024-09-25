@@ -42,8 +42,9 @@
 
 
 ;; after loading set the global values to what was in "vals.lisp"
-(defvar *keep-globals-p* nil)
-(read-globals)
+(defvar *keep-globals-p* nil)   ;; this initializes *keep-globals-p* variable
+(read-globals)                  ;; this overtakes the globals only when
+                                ;; keep-globals-p in vals.lisp was set to T
 
 
 #-sbcl

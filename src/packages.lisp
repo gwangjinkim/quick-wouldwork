@@ -30,4 +30,6 @@
            #:read-globals
            #:*globals-file*
            #:*keep-globals-p*
-           #:toggle-globals))
+           #:toggle-globals
+           #:set-globals
+           #:display-globals))

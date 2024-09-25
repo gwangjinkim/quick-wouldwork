@@ -188,8 +188,8 @@ USE MULTIPLE CORES:
 
 (defun read-from-file (filename &optional (default '()))
   (if (probe-file filename)  ; Check if the file exists
-      (with-open-file (in filename :direction :input)
-        (read in))
+      (with-open-file (stream filename :direction :input)
+        (read stream))
       ;; If file doesn't exist, create it with the default values
       (progn
         (save-to-file default filename)
@@ -203,15 +203,34 @@ USE MULTIPLE CORES:
    the values of these global variables. The user should not
    have to worry about the changes of these values after reloading.")
 
+(defun display-globals ()
+  (format t "*keep-globals-p*~%~%~A~%~%*debug*~%~%~A~%~%*features*~%~%~A~%~%*threads*~%~%~A~%~%"
+            *keep-globals-p*
+            *debug*   
+            *features* 
+            *threads*))
+
 (defun save-globals ()
   "Save the values of the globals (*keep-globals-p* *debug* *features* *threads*) in the vals.lisp file."
+  (display-globals)
   (save-to-file (list *keep-globals-p* *debug* *features* *threads*) *globals-file*)) ;; this stores global var values
 
+(defun set-globals (&key (keep-globals-p *keep-globals-p*)
+                         (debug *debug*)
+                         (features *features*)
+                         (threads *threads*))
+  "Set multiple globals at once in keywords argument format."
+  (display-globals)
+  (setf *keep-globals-p* keep-globals-p
+        *debug* debug
+        *features* features
+        *threads* threads))
+
 (defun read-globals ()
-  "Read and setf values for (*debug* *features* *threads*) from vals.lisp file."
+  "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
     (keep-globals-p tmp-debug tmp-features tmp-threads) 
-      (read-from-file *globals-file* (list t 0 *features* 0))
+      (read-from-file *globals-file* (list nil 0 *features* 0))
     (when keep-globals-p
       (setf *keep-globals-p* keep-globals-p
             *debug* tmp-debug
@@ -221,23 +240,11 @@ USE MULTIPLE CORES:
 ;; get transferred to the current session.
 ;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
 
-
-;; if vals.lisp is not existent in the package, generate it with default values:
-(unless (probe-file *globals-file*)
-  (let ((*keep-globals-p* nil)
-        (*debug* 0)
-        (*threads* 0))
-    (save-globals)))
-
 (defun toggle-globals ()
   (if *keep-globals-p*
       (setf *keep-globals-p* nil)
       (setf *keep-globals-p* t))
   (save-globals))
-
-(defun f () (in-package :ww))
-(f)
-
 
 ;; -------------------- problem.lisp file handling ------------------------ ;;
 
@@ -313,8 +320,8 @@ USE MULTIPLE CORES:
    keep-globals-p determines whether the global variables from the last session should be overtaken."
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
-  (setf *keep-globals-p* keep-globals-p)     ;; permanent memory whether to recreate the state or not after compilation
-  (save-globals)                             ;; for persistence of (*keep-globals-p* *debug* *features* *threads*)
+  (when *keep-globals-p*
+    (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features* *threads*)
   (asdf:load-system system-name :force t))
 
 
@@ -350,7 +357,7 @@ USE MULTIPLE CORES:
 						(*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p t))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -379,7 +386,7 @@ USE MULTIPLE CORES:
 
 
 
-(defun run (problem-name &key (with-reload-p t) (keep-globals-p t))
+(defun run (problem-name &key (with-reload-p t) (keep-globals-p nil))
   "Loads, reloads and solves a single problem."
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)
