@@ -224,7 +224,8 @@ USE MULTIPLE CORES:
   (setf *keep-globals-p* keep-globals-p
         *debug* debug
         *features* features
-        *threads* threads))
+        *threads* threads)
+  (save-globals))
 
 (defun read-globals ()
   "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
@@ -320,7 +321,7 @@ USE MULTIPLE CORES:
    keep-globals-p determines whether the global variables from the last session should be overtaken."
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
-  (when *keep-globals-p*
+  (when keep-globals-p
     (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features* *threads*)
   (asdf:load-system system-name :force t))
 
