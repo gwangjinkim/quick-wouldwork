@@ -235,13 +235,43 @@
   t)
 
 
-(defun print-ht (table) 
+(defun print-ht (ht) 
   "Prints a hash table line by line."
-  (declare (type hash-table table))
-  (format t "~&~A" table)
-  (maphash #'(lambda (key val) (format t "~&~A ->~10T ~A" key val)) table)
+  (declare (type hash-table ht))
+  (format t "~&~A" ht)
+  (maphash (lambda (key val) (format t "~&~S ->~10T ~S" key val)) ht)
   (terpri)
-  table)
+  ht)
+
+#-sbcl
+(defun print-ght (ght) 
+  "Prints a generic hash table (from :genhash) line by line."
+  (format t "~&~A" ght)
+  (genhash:hashmap (lambda (key val) (format t "~&~S ->~10T ~S" key val)) ght)
+  (terpri)
+  ght)
+
+#-sbcl
+(defun print-ght-keys (ght)
+  "Prints the keys of a generic hash table (from :genhash)."
+  (format t "~&Generic Hash Table: ~A" ght)
+  (let ((count 0))
+    (genhash:hashmap 
+     (lambda (key val)
+       (declare (ignore val))
+       (incf count)
+       (format t "~&Key type: ~A" (type-of key))
+       (format t "~&Key: ")
+       (if (hash-table-p key)
+           (progn
+             (format t "Hash Table:")
+             (print-ht key)
+             (format t "~&End of Hash Table Key"))
+           (princ key)))
+     ght)
+    (format t "~&Number of keys: ~A" count))
+  (terpri)
+  ght)
 
 
 (defun hash-table-same-keys-p (ht1 ht2)

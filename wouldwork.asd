@@ -16,7 +16,7 @@
   :bug-tracker "https://github.com/davypough/quick-wouldwork/issues"
   :source-control (:git "https://github.com/davypough/quick-wouldwork.git")
   :depends-on (:alexandria :iterate :lparallel
-               #-sbcl :cl-custom-hash-table
+               #-sbcl :genhash
                #-sbcl :trivial-backtrace
                #-sbcl :metering)
   :serial t

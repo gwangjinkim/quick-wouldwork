@@ -15,16 +15,21 @@
    access the hash table. New elements are pushed at the fill-pointer, and
    popped at the fill-pointer minus 1."
   (vector (make-array 0 :adjustable t :fill-pointer t) :type (array * (*)))
-  (table (make-hash-table) :type hash-table)  ;change to take a custom hash table
+  (table (make-hash-table))  ;can take a normal hash-table or genhash generic hash table
   (keyfn #'identity :type function))  ;fn to get hash table keys
 
 
 (defun push-hstack (elt hstk)
   "Pushes an element onto hstack's vector and table."
+  #+sbcl
   (setf (gethash (funcall (hstack.keyfn hstk) elt) (hstack.table hstk))
+        elt)
+  #-sbcl
+  (setf (genhash:hashref (funcall (hstack.keyfn hstk) elt) (hstack.table hstk))
         elt)
   (vector-push-extend elt (hstack.vector hstk))
   hstk)
+
 
 
 (defun pop-hstack (hstk)
@@ -33,7 +38,8 @@
          (fptr-1 (1- (fill-pointer vec)))
          (tbl (hstack.table hstk))
          (key (funcall (hstack.keyfn hstk) (aref vec fptr-1))))
-    (remhash key tbl)
+    #+sbcl (remhash key tbl)
+    #-sbcl (genhash:hashrem key tbl)
     (vector-pop vec)))
 
 
@@ -50,10 +56,11 @@
   (aref (hstack.vector hstk) n))
 
 
-(defun key-present-hstack (key hstk)
-  "Test whether a key is present in a hash stack,
-   returns the value associated with that key."
-  (gethash key (hstack.table hstk)))
+;(defun key-present-hstack (key hstk)
+;  "Test whether a key is present in a hash stack,
+;   returns the value associated with that key."
+;  #-sbcl (gethash key (hstack.table hstk))
+;  #+sbcl (genhash:hashref key (hstack.table hstk)))
 
 
 (defun deletef-nth-hstack (n hstk)
@@ -63,9 +70,9 @@
          (tbl (hstack.table hstk))
          (nth-entry (aref vec n))
          (key (funcall (hstack.keyfn hstk) nth-entry)))
-    (remhash key tbl)
+    #+sbcl (remhash key tbl)
+    #-sbcl (genhash:hashrem key tbl)
     (setf vec (delete-if (constantly t) vec :start n :count 1))
-    ;(decf (fill-pointer vec))
     nth-entry))
 
 
@@ -81,4 +88,5 @@
 
 (defun clear-hstack (hstk)
   (setf (fill-pointer (hstack.vector hstk)) 0)
-  (clrhash (hstack.table hstk)))
+  #+sbcl (clrhash (hstack.table hstk))
+  #-sbcl (genhash:hashclr (hstack.table hstk)))

@@ -53,11 +53,13 @@
    and hash table of idb -> node.")
 (declaim (hs::hstack *open*))
 
-#+sbcl   ;use custom hash table for all non-sbcl instead of make-hash-table
+
+#+sbcl
 (define-global *closed* (make-hash-table)  ;initialized in dfs
   "Contains the set of closed state idbs for graph search, idb -> (depth time value).")
 #-sbcl
-(define-global *closed* nil)
+(define-global *closed* (genhash:make-generic-hash-table)  ;initialized in dfs
+  "Contains the set of closed state idbs for graph search, idb -> (depth time value).")
 
 
 (defun node.state.idb (node)
@@ -80,10 +82,6 @@
           (t #'equal))))  ;remember ht-values are always lists of items, not atoms
 
 
-(defparameter *fixed-ht-values-fn* (choose-ht-value-test *relations*)
-  "Determines which equality test to use in fixed-keys-ht-equal.")
-
-
 (defun fixed-keys-ht-equal (ht-key1 ht-key2)
   "Quick equality test with *closed* for two hash tables with the same fixed keys.
    The equality predicate tests the hash table values, skipping the keys."
@@ -103,8 +101,16 @@
              ht)
     hash))
 
+
+(defparameter *fixed-ht-values-fn* (choose-ht-value-test *relations*)
+  "Determines which equality test to use in fixed-keys-ht-equal.")
+
+
 #+sbcl
 (sb-ext:define-hash-table-test fixed-keys-ht-equal fixed-keys-ht-hash)
+#-sbcl
+(progn (genhash:hashrem 'fixed-keys-ht-equal genhash::*hash-test-designator-map*)
+       (genhash:register-test-designator 'fixed-keys-ht-equal #'fixed-keys-ht-hash #'fixed-keys-ht-equal))
 
 
 (defun fixedp (relations)
@@ -127,30 +133,20 @@
           (funcall 'bounding-function? *start-state*)))
   (let ((fixed-idb (fixedp *relations*))
         (parallelp (> *threads* 0)))
-    (setf *open* (hs::make-hstack :table (make-hash-table :test (if fixed-idb
-                                                                  'fixed-keys-ht-equal
-                                                                  'equalp)
-                                                          ;:rehash-size 2.0
-                                                          ;:rehash-threshold 0.8
-                                                          :synchronized parallelp)
-                                  :keyfn #'node.state.idb))
+    (declare (ignorable parallelp))
+    (setf *open* 
+      (hs::make-hstack :table 
+                         #+sbcl (make-hash-table :test (if fixed-idb 'fixed-keys-ht-equal 'equalp)
+                                                 :synchronized parallelp)
+                         #-sbcl (genhash:make-generic-hash-table :test (if fixed-idb 'fixed-keys-ht-equal 'equalp))
+                       :keyfn #'node.state.idb))
     (when (eql *tree-or-graph* 'graph)
-      #+sbcl
-      (setf *closed* (make-hash-table :test (if fixed-idb
-                                              'fixed-keys-ht-equal
-                                              'equalp)
-                                      :size 100000
-                                      ;:rehash-size 2.0
-                                      ;:rehash-threshold 0.8
-                                      :synchronized parallelp))
-     #-sbcl
-     (if fixed-idb
-       (cl-custom-hash-table:define-custom-hash-table-constructor make-custom-ht
-         :test fixed-keys-ht-equal :hash-function fixed-keys-ht-hash)
-       (cl-custom-hash-table:define-custom-hash-table-constructor make-custom-ht
-         :test equalp :hash-function sxhash))
-     #-sbcl
-     (define-global *closed* (make-custom-ht))))
+      (setf *closed* 
+        #+sbcl (make-hash-table :test (if fixed-idb 'fixed-keys-ht-equal 'equalp)
+                                :size 100000
+                                :synchronized parallelp)
+        #-sbcl (genhash:make-generic-hash-table :test (if fixed-idb 'fixed-keys-ht-equal 'equalp)
+                                                :size 100000))))
   (hs::push-hstack (make-node :state (copy-problem-state *start-state*)) *open*)
   (setf *program-cycles* 0)
   (setf *average-branching-factor* 0.0)
@@ -233,11 +229,10 @@
                (list (node.depth current-node)
                      (problem-state.time (node.state current-node))
                      (problem-state.value (node.state current-node))))
-      #-sbcl (cl-custom-hash-table:with-custom-hash-table
-               (setf (gethash (problem-state.idb (node.state current-node)) *closed*)
-                 (list (node.depth current-node)
-                       (problem-state.time (node.state current-node))
-                       (problem-state.value (node.state current-node))))))
+      #-sbcl (setf (genhash:hashref (problem-state.idb (node.state current-node)) *closed*)
+               (list (node.depth current-node)
+                     (problem-state.time (node.state current-node))
+                     (problem-state.value (node.state current-node)))))
     (let ((succ-states (expand current-node)))  ;from generate-children
       (when *troubleshoot-current-node*
         (setf *debug* 5)
@@ -255,7 +250,7 @@
       (return-from df-bnb1 (process-successors succ-states current-node))))))  ;returns live successor nodes
 
 
-(defun process-successors (succ-states current-node)
+(defun process-successors (succ-states current-node)    ;(ut::print-ght-keys (hs::hstack.table *open*)) (print 'successors)
   (iter (with succ-depth = (1+ (node.depth current-node)))
         (for succ-state in succ-states)
         (when (and *solutions* (member *solution-type* '(min-length min-time min-value max-value)))
@@ -274,8 +269,8 @@
             (increment-global *repeated-states*)
             (finalize-path-depth succ-depth)
             (next-iteration)))
-        (when (eql *tree-or-graph* 'graph)
-          (let ((open-node (hs::key-present-hstack (problem-state.idb succ-state) *open*)))
+        (when (eql *tree-or-graph* 'graph)   ;(ut::print-ht (problem-state.idb succ-state))
+          (let ((open-node (idb-in-open (problem-state.idb succ-state))))
             (when open-node
               (narrate "State already on open" succ-state succ-depth)
               (increment-global *repeated-states*)
@@ -290,14 +285,41 @@
               (increment-global *repeated-states*)
               (if (better-than-closed closed-values succ-state succ-depth)  ;succ has better value
                 #+sbcl (remhash succ-idb *closed*)  ;then reactivate on open below
-                #-sbcl (cl-custom-hash-table:with-custom-hash-table (remhash succ-idb *closed*))
+                #-sbcl (genhash:hashrem succ-idb *closed*)
                 (progn (finalize-path-depth succ-depth) (next-iteration))))))  ;drop this succ
         (collecting (generate-new-node current-node succ-state))))  ;live successor
 
 
-(defun get-closed-values (succ-idb)
-  #+sbcl (gethash succ-idb *closed*)
-  #-sbcl (cl-custom-hash-table:with-custom-hash-table (gethash succ-idb *closed*)))
+(defun idb-in-open (idb)
+  "Determines if an idb hash table's contents match the contents of a key in *open*'s table.
+   Returns the node in *open* or nil."
+  #+sbcl (let ((ht (hs::hstack.table *open*)))
+           (block ht-equality-key
+             (maphash (lambda (key value)
+                        (when (funcall (hash-table-test ht) idb key)
+                          (return-from ht-equality-key value)))
+                      ht)))
+  #-sbcl (let ((ght (hs::hstack.table *open*)))
+           (block ht-equalp-key
+             (genhash:hashmap (lambda (key value)
+                                (when (equalp idb key)  ;note does not ever test with fixed-keys-ht-equal
+                                  (return-from ht-equalp-key value)))
+                              ght))))
+
+
+(defun get-closed-values (idb)
+  #+sbcl (let ((ht *closed*))
+           (block ht-equality-key
+             (maphash (lambda (key value)
+                        (when (funcall (hash-table-test ht) idb key)
+                          (return-from ht-equality-key value)))
+                      ht)))
+  #-sbcl (let ((ght *closed*))
+           (block ht-equalp-key
+             (genhash:hashmap (lambda (key value)
+                                (when (equalp idb key)  ;note does not ever test with fixed-keys-ht-equal
+                                  (return-from ht-equalp-key value)))
+                              ght))))
 
 
 (defun goal (state)
@@ -659,13 +681,12 @@
         (when (eql *tree-or-graph* 'graph)
           (format t "~%ht count: ~:D    ht size: ~:D"
                   #+sbcl (hash-table-count *closed*)
-                  #-sbcl (cl-custom-hash-table:with-custom-hash-table (hash-table-count *closed*))
+                  #-sbcl (genhash:generic-hash-table-count *closed*)
                   #+sbcl (hash-table-size *closed*)
-                  #-sbcl (cl-custom-hash-table:with-custom-hash-table (hash-table-size *closed*))))
+                  #-sbcl (genhash:generic-hash-table-size *closed*)))
         (format t "~%net average branching factor = ~:D" (round *average-branching-factor*))
         (iter (while (and *rem-init-successors*
-                          (not (hs::key-present-hstack (problem-state.idb (node.state (first *rem-init-successors*)))
-                                                       *open*))))
+                          (not (idb-in-open (problem-state.idb (node.state (first *rem-init-successors*)))))))
               (pop-global *rem-init-successors*))
         (when (< *threads* 2)
           (format t "~%current progress: in #~:D of ~:D initial branches"

@@ -30,7 +30,7 @@
 (declaim (type list *probe*))
 
 
-(defvar *debug* 1
+(defvar *debug* 0
   "Set the debug level for subsequent runs.
     0 - no debugging
     1 - display full search tree
@@ -47,7 +47,7 @@
                                 ;; keep-globals-p in vals.lisp was set to T
 
 
-#-sbcl
+#+sbcl
 (when (> *threads* 0)
   (error "Note that multi-threading is not available unless running in SBCL.
           Please set *threads* in ww-settings.lisp to 0."))

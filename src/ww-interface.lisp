@@ -198,45 +198,45 @@ USE MULTIPLE CORES:
 (defparameter *globals-file* 
   (merge-pathnames "vals.lisp" (get-package-root :wouldwork))
   "In the vals.lisp file of this package the values of 
-   *threads* and *features* are stored as a list.
+    and *features* are stored as a list.
    This should preserve when reloading the package for problems
    the values of these global variables. The user should not
    have to worry about the changes of these values after reloading.")
 
 (defun display-globals ()
-  (format t "*keep-globals-p*~%~%~A~%~%*debug*~%~%~A~%~%*features*~%~%~A~%~%*threads*~%~%~A~%~%"
+  (format t "~&*keep-globals-p* ~A~%*debug* ~A~%*features*~%~A~%~%"
             *keep-globals-p*
             *debug*   
-            *features* 
-            *threads*))
+            ;*threads*
+            *features*))
 
 (defun save-globals ()
-  "Save the values of the globals (*keep-globals-p* *debug* *features* *threads*) in the vals.lisp file."
+  "Save the values of the globals (*keep-globals-p* *debug* *features*) in the vals.lisp file."
   (display-globals)
-  (save-to-file (list *keep-globals-p* *debug* *features* *threads*) *globals-file*)) ;; this stores global var values
+  (save-to-file (list *keep-globals-p* *debug* *features* #|*threads*|#) *globals-file*)) ;; this stores global var values
 
 (defun set-globals (&key (keep-globals-p *keep-globals-p*)
                          (debug *debug*)
-                         (features *features*)
-                         (threads *threads*))
+                         (features *features*))
+                         ;(threads *threads*))
   "Set multiple globals at once in keywords argument format."
-  (display-globals)
+  ;(display-globals)
   (setf *keep-globals-p* keep-globals-p
         *debug* debug
-        *features* features
-        *threads* threads)
+        *features* features)
+        ;*threads* threads)
   (save-globals))
 
 (defun read-globals ()
   "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
-    (keep-globals-p tmp-debug tmp-features tmp-threads) 
-      (read-from-file *globals-file* (list nil 0 *features* 0))
+    (keep-globals-p tmp-debug tmp-features)  ; tmp-threads) 
+      (read-from-file *globals-file* (list nil 0 *features*))  ; 0))
     (when keep-globals-p
       (setf *keep-globals-p* keep-globals-p
             *debug* tmp-debug
-            *features* tmp-features
-            *threads* tmp-threads))))   ;; this reads-in global variable values and  sets them
+            *features* tmp-features))))
+            ;*threads* tmp-threads))))   ;; this reads-in global variable values and  sets them
 ;; the `keep-globals-p` variable decides over whether the values of `vals.lisp`
 ;; get transferred to the current session.
 ;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
@@ -322,7 +322,7 @@ USE MULTIPLE CORES:
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
   (when keep-globals-p
-    (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features* *threads*)
+    (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features*) ;*threads*)
   (asdf:load-system system-name :force t))
 
 
@@ -333,7 +333,7 @@ USE MULTIPLE CORES:
     "problem-jugs2.lisp" "problem-jugs4.lisp" "problem-queens4.lisp"
     "problem-queens8.lisp" "problem-captjohn-csp.lisp" "problem-quern.lisp" 
     "problem-graveyard.lisp" "problem-sentry.lisp" "problem-crossword5-11.lisp"
-    "problem-array-path.lisp" "problem-tiles1a-heuristic.lisp" "problem-tiles7a-heuristic.lisp"
+    "problem-array-path.lisp" "problem-tiles1a-heuristic.lisp" ;"problem-tiles7a-heuristic.lisp"
     "problem-triangle-xy.lisp" "problem-triangle-xyz.lisp" "problem-triangle-heuristic.lisp"
     "problem-triangle-macros.lisp" "problem-triangle-macros-one.lisp"
     "problem-tsp.lisp" "problem-u2.lisp" "problem-donald.lisp"

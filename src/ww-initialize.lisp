@@ -53,6 +53,9 @@
   (when (and (eql *tree-or-graph* 'graph) (not (fixedp *relations*)))
     (format t "~%NOTE: In graph search, you could significantly improve search efficiency by")
     (format t "~&changing each dynamic relation to include at least one fluent ($) variable.~%"))
+  (when (and (> *threads* 0) (not (member :sbcl *features*)))
+    (format t "~%Note that multi-threading is not available unless running SBCL. Please reset *threads*
+               in ww-settings.lisp to 0 and restart wouldwork.~%"))
   (when (and (> *threads* 0) (> *debug* 1))
     (setf *debug* 1)
     (format t "~%ADVISORY: Currently set to run parallel threads. Resetting *debug* to 1.~%"))
