@@ -6,7 +6,7 @@
 
 (in-package :ww)
 
-(ww-set *problem* tiles0b-csp)
+(ww-set *problem-name* tiles0b-csp)
 
 (ww-set *problem-type* csp)
 

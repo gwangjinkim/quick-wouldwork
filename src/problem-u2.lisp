@@ -5,11 +5,14 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* u2)
+(ww-set *problem-name* u2)
+
+(ww-set *problem-type* planning)
 
 ;(ww-set *depth-cutoff* 7)
 
 (ww-set *solution-type* min-length)
+
 
 (define-types
   person        (bono edge adam larry)

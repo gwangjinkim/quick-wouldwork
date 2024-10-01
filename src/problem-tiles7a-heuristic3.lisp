@@ -6,7 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* tiles7a-heuristic3)  ;continuation from heuristic2
+(ww-set *problem-name* tiles7a-heuristic3)  ;continuation from heuristic2
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

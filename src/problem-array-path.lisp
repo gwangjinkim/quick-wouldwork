@@ -7,7 +7,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* array-path)
+(ww-set *problem-name* array-path)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 

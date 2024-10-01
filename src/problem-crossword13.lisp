@@ -5,7 +5,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* crossword13)
+(ww-set *problem-name* crossword13)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 

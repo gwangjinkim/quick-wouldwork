@@ -8,7 +8,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* smallspace)
+(ww-set *problem-name* smallspace)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-time)
 

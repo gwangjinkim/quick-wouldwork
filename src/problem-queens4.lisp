@@ -6,9 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* queens4)
+(ww-set *problem-name* queens4)
 
-;(ww-set *depth-cutoff* 4)
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* every)
 

@@ -18,9 +18,13 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* triangle-macros-one)
+(ww-set *problem-name* triangle-macros-one)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
+
+(ww-set *solution-type* first)
 
 
 (defparameter *N* 5)  ;the number of pegs on a side

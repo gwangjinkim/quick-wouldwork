@@ -7,7 +7,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* sentry)
+(ww-set *problem-name* sentry)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 

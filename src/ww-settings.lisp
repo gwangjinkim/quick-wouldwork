@@ -17,8 +17,9 @@
 (declaim (type fixnum *threads*))
 
 
-(defvar *probe* nil
-  "Inserts a probe to stop processing at a specific state.")
+(unless (boundp '*probe*)
+  (defvar *probe* nil
+    "Inserts a probe to stop processing at a specific state."))
 ;Example probes:
 ;   Stops at specified node, for debugging given 
 ;   (<action name> <instantiations> <depth> &optional <count>)
@@ -30,14 +31,15 @@
 (declaim (type list *probe*))
 
 
-(defvar *debug* 0
-  "Set the debug level for subsequent runs.
-    0 - no debugging
-    1 - display full search tree
-    2 - display full search tree with states
-    3 - display basic nodes
-    4 - display full nodes
-    5 - display full nodes + break after each expansion cycle")
+(unless (boundp '*debug*)
+  (defvar *debug* 0
+    "Set the debug level for subsequent runs.
+      0 - no debugging
+      1 - display full search tree
+      2 - display full search tree with states
+      3 - display basic nodes
+      4 - display full nodes
+      5 - display full nodes + break after each expansion cycle"))
 (declaim (type fixnum *debug*))
 
 
@@ -47,7 +49,7 @@
                                 ;; keep-globals-p in vals.lisp was set to T
 
 
-#+sbcl
+#-sbcl
 (when (> *threads* 0)
   (error "Note that multi-threading is not available unless running in SBCL.
           Please set *threads* in ww-settings.lisp to 0."))
@@ -60,7 +62,7 @@
 
 (defparameter *lock* (bt:make-lock))  ;for thread protection
 
-
+#+sbcl
 (if (> *threads* 0)
   (setf *debugger-hook* #'(lambda (condition original-hook)
                             (declare (ignore original-hook))
@@ -205,8 +207,9 @@
   "A flag telling wouldwork to redo the current node for debugging.")
 #+sbcl (declaim (type boolean *troubleshoot-current-node*))
 
-(define-global *branch* -1
-  "If n>0, explore only the nth branch from the *start-state*.")
+(unless (boundp '*branch*)
+  (define-global *branch* -1
+    "If n>0, explore only the nth branch from the *start-state*."))
 (declaim (type fixnum *branch*))
 
 (define-global *counter* 1
@@ -285,32 +288,39 @@
   "Stores time at beginning of the search.")
 (declaim (type (integer 0 4611686018427387903) *start-time*))
 
-(define-global *problem* 'unspecified
-  "Name of the current problem, assigned in problem.lisp by user.")
-(declaim (type symbol *problem*))
+(unless (boundp '*problem-name*)
+  (define-global *problem-name* 'unspecified
+    "Name of the current problem, assigned in problem.lisp by user."))
+(declaim (type symbol *problem-name*))
 
-(define-global *problem-type* 'planning
-  "Spedify whether it's a planning problem or constraint satisfaction problem.")
+(unless (boundp '*problem-type*)
+  (define-global *problem-type* 'planning
+    "Spedify whether it's a planning problem or constraint satisfaction problem."))
 (declaim (type symbol *problem-type*))
 
-(define-global *solution-type* 'first
-  "Specify whether to search for 'first, 'min-length, 'min-time, or 'every solution.")
+(unless (boundp '*solution-type*)
+  (define-global *solution-type* 'first
+    "Specify whether to search for 'first, 'min-length, 'min-time, or 'every solution."))
 (declaim (type symbol *solution-type*))
 
-(define-global *tree-or-graph* 'graph
-  "Whether there are repeated states (graph) or not (tree); try both.")
+(unless (boundp '*tree-or-graph*)
+  (define-global *tree-or-graph* 'graph
+    "Whether there are repeated states (graph) or not (tree); try both."))
 (declaim (type symbol *tree-or-graph*))
 
-(define-global *depth-cutoff* 0
-  "Negative or 0 means no cutoff.")
+(unless (boundp '*depth-cutoff*)
+  (define-global *depth-cutoff* 0
+    "Negative or 0 means no cutoff."))
 (declaim (type fixnum *depth-cutoff*))
 
-(define-global *progress-reporting-interval* 200000
-  "Print progress during search after each multiple n of states examined.")
+(unless (boundp '*progress-reporting-interval*)
+  (define-global *progress-reporting-interval* 100000
+    "Print progress during search after each multiple n of states examined."))
 (declaim (type fixnum *progress-reporting-interval*))
 
-(define-global *randomize-search* nil
-  "Set to t or nil.")
+(unless (boundp '*randomize-search*)
+  (define-global *randomize-search* nil
+    "Set to t or nil."))
 (declaim (type (member nil t) *randomize-search*))
 
 (define-global *types* (make-hash-table :test #'eq)
@@ -440,3 +450,6 @@
 (define-global *parameter-headers* '(standard product combination dot-product)
   "The different ways values can be combined in a pre-parameter list.")
 (declaim (type list *parameter-headers*))
+
+(defparameter *ww-loading* t
+  "Flag to indicate if Wouldwork is currently being loaded. Reset in ww-initialize.lisp")

@@ -8,7 +8,9 @@
 (in-package :ww)  ;required
 
 
-(ww-set *problem* blocks3)
+(ww-set *problem-name* blocks3)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* every)
 

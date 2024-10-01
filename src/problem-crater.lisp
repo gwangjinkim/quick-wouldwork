@@ -6,7 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* crater)
+(ww-set *problem-name* crater)
+
+(ww-set *problem-type* planning)
 
 (ww-set *depth-cutoff* 9)
 

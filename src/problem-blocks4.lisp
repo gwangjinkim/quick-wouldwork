@@ -7,7 +7,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* blocks4)
+(ww-set *problem-name* blocks4)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

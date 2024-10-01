@@ -6,7 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* quern)
+(ww-set *problem-name* quern)
+
+(ww-set *problem-type* planning)
 
 (ww-set *depth-cutoff* 8)  ;set to expected # steps to goal
 

@@ -7,7 +7,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* boxes)
+(ww-set *problem-name* boxes)
+
+(ww-set *problem-type* planning)
 
 (ww-set *depth-cutoff* 15)
 

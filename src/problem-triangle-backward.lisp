@@ -24,7 +24,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* triangle-backward)
+(ww-set *problem-name* triangle-backward)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* every)
 

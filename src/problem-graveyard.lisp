@@ -6,7 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* graveyard)
+(ww-set *problem-name* graveyard)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

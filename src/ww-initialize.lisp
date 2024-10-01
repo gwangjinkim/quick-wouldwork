@@ -59,7 +59,8 @@
   (when (and (> *threads* 0) (> *debug* 1))
     (setf *debug* 1)
     (format t "~%ADVISORY: Currently set to run parallel threads. Resetting *debug* to 1.~%"))
-  (display-parameter-settings))
+  (display-current-parameters)
+  (setf *ww-loading* nil))
 
 
 (defun init-start-state ()
@@ -77,9 +78,9 @@
   (do-init-action-updates *start-state*))  ;updates start-state db & static-db, but not idb & hidb yet
 
 
-(defun display-parameter-settings ()
+(defun display-current-parameters ()
   (format t "~%Current parameter settings:")
-  (ut::prt *problem* *problem-type* *tree-or-graph* *solution-type*
+  (ut::prt *problem-name* *problem-type* *tree-or-graph* *solution-type*
            *depth-cutoff* *progress-reporting-interval*
            *threads* *randomize-search* *debug* *probe*)
   (format t "~&  BRANCH TO EXPLORE => ~A" (if (< *branch* 0) 'ALL *branch*))
@@ -87,6 +88,10 @@
   (format t "~&  EXOGENOUS HAPPENINGS => ~A" (when *happening-names* 'YES))
   (format t "~&  BOUNDING FUNCTION? => ~A" (when (fboundp 'bounding-function?) 'YES))
   (terpri) (terpri))
+
+
+(defun display-all ()  ;alias
+  (display-current-parameters))
   
 
 (init)

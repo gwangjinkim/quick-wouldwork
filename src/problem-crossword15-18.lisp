@@ -44,17 +44,15 @@ file        #states     states/sec      time    best
 (in-package :ww)
 
 
-(ww-set *problem* crossword15-18)
+(ww-set *problem-name* crossword15-18)
 
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 
-
 (ww-set *randomize-search* t)
 
-
 (ww-set *solution-type* max-value)  ;maximize number of used words
-
 
 (ww-set *progress-reporting-interval* 10000000)
 

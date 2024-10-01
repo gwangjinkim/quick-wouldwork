@@ -17,9 +17,13 @@
 (in-package :ww)  ;required
 
 
-(ww-set *problem* triangle-heuristic)
+(ww-set *problem-name* triangle-heuristic)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
+
+(ww-set *solution-type* first)
 
 
 (defparameter *N* 6)  ;the number of pegs on a side

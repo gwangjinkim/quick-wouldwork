@@ -44,7 +44,7 @@
                (equal (problem-state.instantiations state) instantiations)
                (= (node.depth current-node) depth))
       (if (= count *counter*)
-        (setq *debug* 5)
+        (setq *debug* 6)  ;(setq *debug* 5)  ;means probe found
         (incf *counter*)))))
 
 
@@ -247,6 +247,7 @@
                     (update-search-tree (node.state current-node) (node.depth current-node) ""))
       (update-max-depth-explored (1+ (node.depth current-node)))
       (increment-global *total-states-processed* (length succ-states))
+      (when (= *debug* 6) (break))  ;probe found
       (return-from df-bnb1 (process-successors succ-states current-node))))))  ;returns live successor nodes
 
 
@@ -504,7 +505,7 @@
 (defun summarize-search-results (condition)
   (declare (type symbol condition))
   (format t "~2%In problem ~A, performed ~A search for ~A solution."
-            *problem* *tree-or-graph* *solution-type*)
+            *problem-name* *tree-or-graph* *solution-type*)
   (ecase condition
     (first
       (when *solutions*

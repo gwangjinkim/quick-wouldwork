@@ -15,14 +15,13 @@
 (in-package :ww)
 
 
-(ww-set *problem* crossword5-11)
+(ww-set *problem-name* crossword5-11)
 
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 
-
 (ww-set *solution-type* max-value)  ;maximize number of used words
-
 
 (ww-set *progress-reporting-interval* 1000000)
 

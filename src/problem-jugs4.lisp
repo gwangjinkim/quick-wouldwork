@@ -6,9 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* jugs4)
+(ww-set *problem-name* jugs4)
 
-;(ww-set *depth-cutoff* 10)  ;set to >= expected # steps to goal
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

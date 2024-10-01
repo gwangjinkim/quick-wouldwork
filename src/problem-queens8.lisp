@@ -5,7 +5,11 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* queens8)
+(ww-set *problem-name* queens8)
+
+(ww-set *problem-type* planning)  ;Note this could also be programmed as a CSP problem with edits
+
+(ww-set *solution-type* first)
 
 (ww-set *tree-or-graph* tree)
 

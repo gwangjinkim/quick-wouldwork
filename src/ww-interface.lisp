@@ -7,6 +7,54 @@
 
 
 (defun help ()  ;;; text which appears if user enters (help)
+  (format t "~%
+THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
+
+(run <problem-name>) eg, (run \"blocks3\")
+   -- solve a problem
+
+(run-test-problems) alias (run-all)
+   -- solve all test problems
+
+(list-problem-names) alias (list-all)
+   -- lists all currently specifed problems
+      in the src directory (use names with run)
+
+(get-src-folder-path)
+   -- the location where all problem specification files should appear
+
+(profile)
+   -- employs a basic profiler on the problem last run
+
+(display-current-parameters) alias (display-all)
+   -- displays all parameters associated with the problem last run
+
+(ww-set <problem-parameter> <new-value>)
+   -- set a problem parameter to a new value
+   eg, (ww-set *solution-type* <one of first, every, min-length, min-time,
+                                       min-value, or max-value>)
+       (ww-set *tree-or-graph* <one of tree or graph>)
+       (ww-set *depth-cutoff* <positive integer (search to specified depth) or
+                                                 0 (no depth limit)>)
+       (ww-set *progress-reporting-interval* <positive integer;
+                                              eg, 100000 (how often to report progress)>)
+       (ww-set *randomize-search* <t (random depth-first search) or
+                                   nil (standard depth-first search)>)
+       (ww-set *branch* <number (eg, search only branch 3 of 10 initial branches)>)
+       (ww-set *debug* <one of 0 (no debugging), 1-4 (increasing debugging info),
+                               5 (step through search)>)
+       (ww-set *probe* (<action name> <instantiations> <depth> &optional <count>))
+           -- probe enables debugging when a state is reached during search
+           -- see ww-settings.lisp and User Manual for probe format examples
+
+Note that setting any problem parameters at the REPL with ww-set will be overwritten
+by any settings appearing in the problem specification file. Remove (or comment out)
+specific parameter settings in the problem specification file to enable REPL control
+over their values--eg, *depth-cutoff*, *tree-or-graph* etc.
+"))
+
+
+#+nil (defun help ()  ;;; text which appears if user enters (help)
   (format t "
 ;; --------------------- WOULDWORK (2024) Dave Brown <davypough@gmail.com> ----------------- ;;
 
@@ -204,42 +252,92 @@ USE MULTIPLE CORES:
    have to worry about the changes of these values after reloading.")
 
 (defun display-globals ()
-  (format t "~&*keep-globals-p* ~A~%*debug* ~A~%*features*~%~A~%~%"
-            *keep-globals-p*
-            *debug*   
-            ;*threads*
+  (format t "~&*keep-globals-p* ~A~%*depth-cutoff* ~A~%*tree-or-graph* ~A~%*solution-type* ~A~%
+               *progress-reporting-interval* ~A~%*randomize-search* ~A~%*branch* ~A~%*probe* ~A~%                                    *debug* ~A~%*features*~%~A~%~%"
+            *keep-globals-p* *depth-cutoff* *tree-or-graph* *solution-type*
+            *progress-reporting-interval* *randomize-search* *branch* *probe*
+            *debug* ;*threads*
             *features*))
+
+(declaim (special *depth-cutoff* *tree-or-graph* *solution-type* 
+                  *progress-reporting-interval* *randomize-search* 
+                  *branch* *probe* *debug*))
 
 (defun save-globals ()
   "Save the values of the globals (*keep-globals-p* *debug* *features*) in the vals.lisp file."
-  (display-globals)
-  (save-to-file (list *keep-globals-p* *debug* *features* #|*threads*|#) *globals-file*)) ;; this stores global var values
+  (display-current-parameters)  ;(display-globals)
+  (save-to-file (list *keep-globals-p* *depth-cutoff* *tree-or-graph* *solution-type*
+                      *progress-reporting-interval* *randomize-search* *branch* *probe* *debug*
+                      *features* #|*threads*|#)
+                *globals-file*)) ;; this stores global var values
 
 (defun set-globals (&key (keep-globals-p *keep-globals-p*)
+                         (depth-cutoff *depth-cutoff*)
+                         (tree-or-graph *tree-or-graph*)
+                         (solution-type *solution-type*)
+                         (progress-reporting-interval *progress-reporting-interval*)
+                         (randomize-search *randomize-search*)
+                         (branch *branch*)
+                         (probe *probe*)
                          (debug *debug*)
                          (features *features*))
                          ;(threads *threads*))
   "Set multiple globals at once in keywords argument format."
   ;(display-globals)
   (setf *keep-globals-p* keep-globals-p
+        *depth-cutoff* depth-cutoff
+        *tree-or-graph* tree-or-graph
+        *solution-type* solution-type
+        *progress-reporting-interval* progress-reporting-interval
+        *randomize-search* randomize-search
+        *branch* branch
+        *probe* probe
         *debug* debug
         *features* features)
         ;*threads* threads)
   (save-globals))
 
-(defun read-globals ()
+#+nil (defun read-globals ()
   "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
-    (keep-globals-p tmp-debug tmp-features)  ; tmp-threads) 
+    (keep-globals-p tmp-debug tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
+                    tmp-progress-reporting-interval tmp-randomize-search tmp-branch tmp-probe tmp-features)  ; tmp-threads) 
       (read-from-file *globals-file* (list nil 0 *features*))  ; 0))
     (when keep-globals-p
       (setf *keep-globals-p* keep-globals-p
+            *depth-cutoff* tmp-depth-cutoff
+            *tree-or-graph* tmp-tree-or-graph
+            *solution-type* tmp-solution-type
+            *progress-reporting-interval* tmp-progress-reporting-interval
+            *randomize-search* tmp-randomize-search
+            *branch* tmp-branch
+            *probe* tmp-probe
             *debug* tmp-debug
             *features* tmp-features))))
             ;*threads* tmp-threads))))   ;; this reads-in global variable values and  sets them
 ;; the `keep-globals-p` variable decides over whether the values of `vals.lisp`
 ;; get transferred to the current session.
 ;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
+
+(defun read-globals ()
+  "Read and setf values for global variables from vals.lisp file."
+  (let ((default-values (list nil 0 'tree 'first 100000 nil -1 nil 0 *features*)))
+    (destructuring-bind 
+        (keep-globals-p tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
+         tmp-progress-reporting-interval tmp-randomize-search tmp-branch tmp-probe tmp-debug tmp-features)
+        (or (ignore-errors (read-from-file *globals-file*))
+            default-values)
+      (when keep-globals-p
+        (setf *keep-globals-p* keep-globals-p
+              *depth-cutoff* tmp-depth-cutoff
+              *tree-or-graph* tmp-tree-or-graph
+              *solution-type* tmp-solution-type
+              *progress-reporting-interval* tmp-progress-reporting-interval
+              *randomize-search* tmp-randomize-search
+              *branch* tmp-branch
+              *probe* tmp-probe
+              *debug* tmp-debug
+              *features* tmp-features)))))
 
 (defun toggle-globals ()
   (if *keep-globals-p*
@@ -333,7 +431,7 @@ USE MULTIPLE CORES:
     "problem-jugs2.lisp" "problem-jugs4.lisp" "problem-queens4.lisp"
     "problem-queens8.lisp" "problem-captjohn-csp.lisp" "problem-quern.lisp" 
     "problem-graveyard.lisp" "problem-sentry.lisp" "problem-crossword5-11.lisp"
-    "problem-array-path.lisp" "problem-tiles1a-heuristic.lisp" ;"problem-tiles7a-heuristic.lisp"
+    "problem-array-path.lisp" "problem-tiles1a-heuristic.lisp" ;"problem-tiles7a-heuristic.lisp" takes too long in non-sbcl
     "problem-triangle-xy.lisp" "problem-triangle-xyz.lisp" "problem-triangle-heuristic.lisp"
     "problem-triangle-macros.lisp" "problem-triangle-macros-one.lisp"
     "problem-tsp.lisp" "problem-u2.lisp" "problem-donald.lisp"
@@ -353,9 +451,9 @@ USE MULTIPLE CORES:
    - and certain *debug-print-variable-alist* settings"
   `(let ((*compile-verbose* nil)
 	 (*compile-print* nil)
-	 (sb-ext:*debug-print-variable-alist* '((*print-length* . 30)
-						(*print-level* . 6)
-						(*print-pretty* . t))))
+	 #+sbcl (sb-ext:*debug-print-variable-alist* '((*print-length* . 30)
+                                                   (*print-level* . 6)
+					                               (*print-pretty* . t))))
      ,@body))
 
 (defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))

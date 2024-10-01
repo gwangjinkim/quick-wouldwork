@@ -6,8 +6,9 @@
 (in-package :ww)  ;required
 
 
-(ww-set *problem* tsp)
+(ww-set *problem-name* tsp)
 
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-value)
 

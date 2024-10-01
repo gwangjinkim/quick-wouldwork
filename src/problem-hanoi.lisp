@@ -5,7 +5,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* hanoi)
+(ww-set *problem-name* hanoi)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

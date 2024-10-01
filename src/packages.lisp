@@ -1,8 +1,3 @@
-
-;(ql:quickload :alexandria)
-;(ql:quickload :iterate)
-;(ql:quickload :lparallel)
-
 (defpackage :utilities
   (:use :cl)
   (:nicknames :ut))
@@ -12,7 +7,10 @@
   (:nicknames :hs))
 
 (defpackage :wouldwork
+  #+SBCL
   (:use :cl :iterate :sb-ext)
+  #-SBCL
+  (:use :cl :iterate)
   (:nicknames :ww)
   (:shadowing-import-from :iterate)
   (:export #:main

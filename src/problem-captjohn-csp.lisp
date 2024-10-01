@@ -6,7 +6,7 @@
 
 (in-package :ww)
 
-(ww-set *problem* captjohn-csp)
+(ww-set *problem-name* captjohn-csp)
 
 (ww-set *problem-type* csp)
 

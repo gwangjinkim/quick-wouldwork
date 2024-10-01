@@ -13,7 +13,9 @@
 (in-package :ww)  ;required
 
 
-(ww-set *problem* donald)
+(ww-set *problem-name* donald)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* first)
 

@@ -16,7 +16,11 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* triangle-xyz)
+(ww-set *problem-name* triangle-xyz)
+
+(ww-set *problem-type* planning)
+
+(ww-set *solution-type* first)
 
 
 (defparameter *N* 5)  ;the number of pegs on a side

@@ -6,7 +6,9 @@
 
 (in-package :ww)  ;required
 
-(ww-set *problem* tiles1d)
+(ww-set *problem-name* tiles1d)
+
+(ww-set *problem-type* planning)
 
 (ww-set *solution-type* min-length)
 

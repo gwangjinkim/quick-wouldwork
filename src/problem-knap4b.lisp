@@ -6,11 +6,11 @@
 (in-package :ww)  ;required
 
 
-(ww-set *problem* knap4b)
+(ww-set *problem-name* knap4b)
 
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* graph)
-
 
 (ww-set *solution-type* max-value)
 

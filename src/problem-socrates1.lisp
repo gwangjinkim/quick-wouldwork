@@ -5,7 +5,9 @@
 
 (in-package :ww)
 
-(ww-set *problem* socrates1)
+(ww-set *problem-name* socrates1)
+
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 

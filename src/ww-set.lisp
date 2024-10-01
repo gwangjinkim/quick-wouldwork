@@ -15,30 +15,45 @@
 
 
 (defmacro ww-set (param val)
-  ;Allows resetting of user parameters after loading.
-  (case param
-    ((*problem* *problem-type* *depth-cutoff* *tree-or-graph* *solution-type*
-      *progress-reporting-interval* *randomize-search* *branch*)
-     `(setq ,param ',val))
-    (*debug*
-     `(progn (setq *debug* ',val)
-	     (if (or (> *debug* 0) *probe*)
-                 (pushnew :ww-debug *features*)  ;allows inserting debug code
-                 (setf *features* (remove :ww-debug *features*)))
-	     ;(with-silenced-compilation (asdf:load-system :wouldwork :force t) (in-package :ww))
-         (set-globals :debug ',val)
-	     ',val))
-    (*probe*
-     `(progn (setq *probe* ',val)
-	     (setf *debug* 0)
-	     (setq *counter* 1)
-	     ',val))
-    (*threads*
-     `(block sbcl-test
-        (progn (unless (member :sbcl *features*)
-                 (format t "~%Note that multi-threading is not available unless running SBCL.~2%")
-                 (return-from sbcl-test))
-               (format t "~%*threads* cannot be changed with ww-set.")
-	           (format t "~%Instead, set its value in the file settings.lisp, and then exit and restart SBCL.~2%"))))
-    (otherwise
-     (format t "~%~A is not a valid parameter name in ww-set.~%" param))))
+  "Allows resetting of user parameters during and after loading."
+  (let ((param-name (symbol-name param)))
+    `(case ',param
+       ((*depth-cutoff* *tree-or-graph* *solution-type*
+         *progress-reporting-interval* *randomize-search* *branch*)
+        (progn (setq ,param ,(if (symbolp val) `',val val))
+               (unless *ww-loading*
+                 (let* ((str ,param-name)
+                        (kwd (intern (subseq str 1 (1- (length str))) :keyword)))
+                   (set-globals kwd ,(if (symbolp val) `',val val))))
+               ,(if (symbolp val) `',val val)))
+       (*debug*
+        (progn (setq *debug* ,(if (symbolp val) `',val val))
+               (if (or (> *debug* 0) *probe*)
+                   (pushnew :ww-debug *features*)
+                   (setf *features* (remove :ww-debug *features*)))
+               (unless *ww-loading*
+                 (set-globals :debug ,(if (symbolp val) `',val val)))
+               ,(if (symbolp val) `',val val)))
+       (*probe*
+        (progn 
+          (unless (listp ',val)
+            (error "*probe* value must be an unquoted list"))
+          (setq *probe* ',val)
+          (setf *debug* 0)
+          (setq *counter* 1)
+          (unless *ww-loading*
+            (set-globals :debug 0 :probe ',val))
+          ',val))
+       (*threads*
+        '(block sbcl-test
+           (progn (unless (member :sbcl *features*)
+                    (format t "~%Note that multi-threading is not available unless running SBCL.~2%")
+                    (return-from sbcl-test))
+                  (format t "~%*threads* cannot be changed with ww-set.")
+                  (format t "~%Instead, set its value in the file settings.lisp, and then exit and restart SBCL.~2%"))))
+       ((*problem-name* *problem-type*)
+        (progn (setq ,param ,(if (symbolp val) `',val val))
+               (unless *ww-loading*
+                 (format t "~%Please set the parameter ~A in the problem specification file, not in the REPL.~%" ',param))))
+       (otherwise
+        (format t "~%~A is not a valid parameter name in ww-set.~%" ',param)))))

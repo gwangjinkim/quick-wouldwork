@@ -8,14 +8,13 @@
 (in-package :ww)
 
 
-(ww-set *problem* knap4a)
+(ww-set *problem-name* knap4a)
 
+(ww-set *problem-type* planning)
 
 (ww-set *tree-or-graph* tree)
 
-
 (ww-set *solution-type* max-value)
-
 
 ;(ww-set *progress-reporting-interval* 10)  ;for debugging
 
