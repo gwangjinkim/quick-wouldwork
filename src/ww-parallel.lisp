@@ -1,5 +1,7 @@
 (in-package :ww)
 
+;; New special variable to signal shutdown
+(defparameter *shutdown-requested* nil)
 
 (define-condition thread-error (error)  ;condition for signaling errors across threads
   ((original-error :initarg :original-error :reader original-error)))

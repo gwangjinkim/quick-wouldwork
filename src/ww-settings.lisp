@@ -77,7 +77,6 @@
 
 #+sbcl (defparameter *lock* (bt:make-lock))  ;for thread protection
 
-<<<<<<< HEAD
 ;#+sbcl
 ;(if (> *threads* 0)
 ;  (setf *debugger-hook* #'(lambda (condition original-hook)
@@ -89,19 +88,6 @@
 ;                              (finish-output *error-output*))
 ;                            (abort)))
 ;  (setf *debugger-hook* nil))
-=======
-#+sbcl
-(if (> *threads* 0)
-  (setf *debugger-hook* #'(lambda (condition original-hook)
-                            (declare (ignore original-hook))
-                            (bt:with-lock-held (*lock*)
-                              #+sbcl (sb-debug:print-backtrace)
-                              #-sbcl (trivial-backtrace:print-backtrace condition)
-                              (format *error-output* "~%~A~2%" condition)
-                              (finish-output *error-output*))
-                            (abort)))
-  (setf *debugger-hook* nil))
->>>>>>> 7066f6d (merge ww-interface.lisp)
 
 
 (defun eql* (&rest arguments)
@@ -210,15 +196,6 @@
 
 (define-global *troubleshoot-current-node* nil
   "A flag telling wouldwork to redo the current node for debugging.")
-<<<<<<< HEAD
-=======
-#+sbcl (declaim (type boolean *troubleshoot-current-node*))
-
-(unless (boundp '*branch*)
-  (define-global *branch* -1
-    "If n>0, explore only the nth branch from the *start-state*."))
-(declaim (type fixnum *branch*))
->>>>>>> 7066f6d (merge ww-interface.lisp)
 
 (define-global *counter* 1
   "For misc debugging with probe function")
@@ -284,7 +261,6 @@
 (define-global *start-time* 0
   "Stores time at beginning of the search.")
 
-<<<<<<< HEAD
 (define-global *problem-name* 'unspecified
   "Name of the current problem, assigned in problem.lisp by user.")
 
@@ -308,42 +284,30 @@
 
 (define-global *branch* -1
   "If n>0, explore only the nth branch from the *start-state*.")
-=======
 (unless (boundp '*problem-name*)
   (define-global *problem-name* 'unspecified
     "Name of the current problem, assigned in problem.lisp by user."))
 (declaim (type symbol *problem-name*))
 
-(unless (boundp '*problem-type*)
-  (define-global *problem-type* 'planning
-    "Spedify whether it's a planning problem or constraint satisfaction problem."))
-(declaim (type symbol *problem-type*))
+(define-global *problem-type* 'planning
+  "Spedify whether it's a planning problem or constraint satisfaction problem.")
 
-(unless (boundp '*solution-type*)
-  (define-global *solution-type* 'first
-    "Specify whether to search for 'first, 'min-length, 'min-time, or 'every solution."))
-(declaim (type symbol *solution-type*))
+(define-global *solution-type* 'first
+  "Specify whether to search for first, min-length, min-time, or every solution.")
 
-(unless (boundp '*tree-or-graph*)
-  (define-global *tree-or-graph* 'graph
-    "Whether there are repeated states (graph) or not (tree); try both."))
-(declaim (type symbol *tree-or-graph*))
+(define-global *tree-or-graph* 'graph
+  "Whether there are repeated states (graph) or not (tree); try both.")
 
-(unless (boundp '*depth-cutoff*)
-  (define-global *depth-cutoff* 0
-    "Negative or 0 means no cutoff."))
-(declaim (type fixnum *depth-cutoff*))
+(define-global *depth-cutoff* 0
+  "Negative or 0 means no cutoff.")
 
-(unless (boundp '*progress-reporting-interval*)
-  (define-global *progress-reporting-interval* 100000
-    "Print progress during search after each multiple n of states examined."))
-(declaim (type fixnum *progress-reporting-interval*))
+(define-global *progress-reporting-interval* 100000
+  "Print progress during search after each multiple n of states examined.")
 
 (unless (boundp '*randomize-search*)
   (define-global *randomize-search* nil
     "Set to t or nil."))
 (declaim (type (member nil t) *randomize-search*))
->>>>>>> 7066f6d (merge ww-interface.lisp)
 
 (define-global *types* (make-hash-table :test #'eq)
   "Table of all types.")
@@ -440,10 +404,6 @@
 
 (define-global *parameter-headers* '(standard product combination dot-product)
   "The different ways values can be combined in a pre-parameter list.")
-<<<<<<< HEAD
-=======
-(declaim (type list *parameter-headers*))
->>>>>>> 7066f6d (merge ww-interface.lisp)
 
 (defparameter *ww-loading* t
   "Flag to indicate if Wouldwork is currently being loaded. Reset in ww-initialize.lisp")
