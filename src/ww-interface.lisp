@@ -259,9 +259,10 @@ USE MULTIPLE CORES:
             *debug* ;*threads*
             *features*))
 
-(declaim (special *depth-cutoff* *tree-or-graph* *solution-type* 
-                  *progress-reporting-interval* *randomize-search* 
-                  *branch* *probe* *debug*))
+
+;(declaim (special *depth-cutoff* *tree-or-graph* *solution-type* 
+;                  *progress-reporting-interval* *randomize-search* 
+;                  *branch* *probe* *debug*))
 
 (defun save-globals ()
   "Save the values of the globals (*keep-globals-p* *debug* *features*) in the vals.lisp file."
@@ -296,6 +297,7 @@ USE MULTIPLE CORES:
         *features* features)
         ;*threads* threads)
   (save-globals))
+
 
 #+nil (defun read-globals ()
   "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."

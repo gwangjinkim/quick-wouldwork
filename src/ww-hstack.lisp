@@ -19,28 +19,54 @@
   (keyfn #'identity :type function))  ;fn to get hash table keys
 
 
-(defun push-hstack (elt hstk)
-  "Pushes an element onto hstack's vector and table."
-  #+sbcl
-  (setf (gethash (funcall (hstack.keyfn hstk) elt) (hstack.table hstk))
-        elt)
-  #-sbcl
-  (setf (genhash:hashref (funcall (hstack.keyfn hstk) elt) (hstack.table hstk))
-        elt)
-  (vector-push-extend elt (hstack.vector hstk))
-  hstk)
+(defun push-hstack (elt hstk &key new-only)  ;only push if new
+  "Pushes an element onto hstack's vector and table.
+   Returns the hstack and whether the element was added."
+  (let ((key (funcall (hstack.keyfn hstk) elt))
+        (vector (hstack.vector hstk))
+        (table (hstack.table hstk)))
+    #+sbcl
+    (if new-only  ;only push if new specified
+      (if (nth-value 1 (gethash key table))  ;key is already present
+        (values hstk nil)  ;element's key already present, do nothing
+        (progn (setf (gethash key table) (list elt))
+               (vector-push-extend elt vector)
+               (values hstk t)))
+      (progn (push elt (gethash key table))
+             (vector-push-extend elt vector)
+             (values hstk t)))
+    #-sbcl
+    (if new-only  ;only push if new specified
+      (if (nth-value 1 (genhash:hashref key table))  ;key is already present
+        (values hstk nil)  ;element's key already present, do nothing
+        (progn (setf (genhash:hashref key table) (list elt))
+               (vector-push-extend elt vector)
+               (values hstk t)))
+      (progn (push elt (genhash:hashref key table))
+             (vector-push-extend elt vector)
+             (values hstk t)))))
 
 
 
 (defun pop-hstack (hstk)
-  "Pops an element from hstack's vector and removes it from the table. Error if empty."
-  (let* ((vec (hstack.vector hstk))
-         (fptr-1 (1- (fill-pointer vec)))
-         (tbl (hstack.table hstk))
-         (key (funcall (hstack.keyfn hstk) (aref vec fptr-1))))
-    #+sbcl (remhash key tbl)
-    #-sbcl (genhash:hashrem key tbl)
-    (vector-pop vec)))
+  "Pops an element from hstack's vector and removes it from the table. Error if hstk empty."
+  (let* ((vector (hstack.vector hstk))
+         (table (hstack.table hstk))
+         (fptr-1 (1- (fill-pointer vector)))
+         (key (funcall (hstack.keyfn hstk) (aref vector fptr-1))))  ;key in elt at top of vec stack
+    #+sbcl
+    (let ((values (gethash key table)))  ;key guaranteed to be in table with list of values
+      (pop values)
+      (when (null values)
+        (remhash key table))  ;key's value is now nil so remove it
+      (vector-pop vector))
+    #-sbcl
+    (let (values (genhash:hashref key table))  ;key guaranteed to be in table with list of values
+      (pop values)
+      (when (null values)
+        (genhash:hashrem key table))  ;key's value is now nil so remove it
+      (vector-pop vector))))
+
 
 
 (defun empty-hstack (hstk)

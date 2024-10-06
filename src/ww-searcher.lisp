@@ -147,7 +147,7 @@
                                 :synchronized parallelp)
         #-sbcl (genhash:make-generic-hash-table :test (if fixed-idb 'fixed-keys-ht-equal 'equalp)
                                                 :size 100000))))
-  (hs::push-hstack (make-node :state (copy-problem-state *start-state*)) *open*)
+  (hs::push-hstack (make-node :state (copy-problem-state *start-state*)) *open* :new-only (eq *tree-or-graph* 'graph))
   (setf *program-cycles* 0)
   (setf *average-branching-factor* 0.0)
   (setf *total-states-processed* 1)  ;start state is first
@@ -199,10 +199,10 @@
       (setf *num-init-successors* (length succ-nodes))
       (setf *rem-init-successors* (reverse succ-nodes)))
     (loop for succ-node in succ-nodes
-          do (hs::push-hstack succ-node *open*))  ;push lowest heuristic value last
+          do (hs::push-hstack succ-node *open* :new-only (eq *tree-or-graph* 'graph)))  ;push lowest heuristic value last
     (increment-global *program-cycles* 1)  ;finished with this cycle
     (setf *average-branching-factor* (compute-average-branching-factor))
-    (print-search-progress)  ;#nodes expanded so far
+    (print-search-progress *open*)  ;#nodes expanded so far
     (after-each #+:ww-debug (when (>= *debug* 5) (break)))))
 
 
@@ -248,10 +248,10 @@
       (update-max-depth-explored (1+ (node.depth current-node)))
       (increment-global *total-states-processed* (length succ-states))
       (when (= *debug* 6) (break))  ;probe found
-      (return-from df-bnb1 (process-successors succ-states current-node))))))  ;returns live successor nodes
+      (return-from df-bnb1 (process-successors succ-states current-node open))))))  ;returns live successor nodes
 
 
-(defun process-successors (succ-states current-node)    ;(ut::print-ght-keys (hs::hstack.table *open*)) (print 'successors)
+(defun process-successors (succ-states current-node open)    ;(ut::print-ght-keys (hs::hstack.table open)) (print 'successors)
   (iter (with succ-depth = (1+ (node.depth current-node)))
         (for succ-state in succ-states)
         (when (and *solutions* (member *solution-type* '(min-length min-time min-value max-value)))
@@ -271,7 +271,7 @@
             (finalize-path-depth succ-depth)
             (next-iteration)))
         (when (eql *tree-or-graph* 'graph)   ;(ut::print-ht (problem-state.idb succ-state))
-          (let ((open-node (idb-in-open (problem-state.idb succ-state))))
+          (let ((open-node (idb-in-open (problem-state.idb succ-state) open)))
             (when open-node
               (narrate "State already on open" succ-state succ-depth)
               (increment-global *repeated-states*)
@@ -291,35 +291,38 @@
         (collecting (generate-new-node current-node succ-state))))  ;live successor
 
 
-(defun idb-in-open (idb)
-  "Determines if an idb hash table's contents match the contents of a key in *open*'s table.
-   Returns the node in *open* or nil."
-  #+sbcl (let ((ht (hs::hstack.table *open*)))
-           (block ht-equality-key
-             (maphash (lambda (key value)
-                        (when (funcall (hash-table-test ht) idb key)
-                          (return-from ht-equality-key value)))
+(defun idb-in-open (succ-idb open)
+  "Determines if an idb hash table's contents match the contents of a key in open's table.
+   Returns the node in open or nil."
+   (declare (hash-table succ-idb))
+  #+sbcl (let ((ht (hs::hstack.table open)))
+           (block equality-keys
+             (maphash (lambda (open-idb nodes)  ;nodes should contain only one node
+                        ;(unless (hash-table-p open-idb) (bt:with-lock-held (*lock*) (ut::print-ht ht) (terpri)))
+                        (declare (hash-table open-idb) (cons nodes))
+                        (when (funcall (hash-table-test ht) succ-idb open-idb)
+                          (return-from equality-keys (car nodes))))
                       ht)))
-  #-sbcl (let ((ght (hs::hstack.table *open*)))
-           (block ht-equalp-key
-             (genhash:hashmap (lambda (key value)
-                                (when (equalp idb key)  ;note does not ever test with fixed-keys-ht-equal
-                                  (return-from ht-equalp-key value)))
+  #-sbcl (let ((ght (hs::hstack.table open)))
+           (block equalp-keys
+             (genhash:hashmap (lambda (open-idb nodes)
+                                (when (equalp succ-idb open-idb)  ;note does not ever test with fixed-keys-ht-equal
+                                  (return-from equalp-keys (car nodes))))
                               ght))))
 
 
 (defun get-closed-values (idb)
   #+sbcl (let ((ht *closed*))
-           (block ht-equality-key
+           (block equality-keys
              (maphash (lambda (key value)
                         (when (funcall (hash-table-test ht) idb key)
-                          (return-from ht-equality-key value)))
+                          (return-from equality-keys value)))
                       ht)))
   #-sbcl (let ((ght *closed*))
-           (block ht-equalp-key
+           (block equalp-keys
              (genhash:hashmap (lambda (key value)
                                 (when (equalp idb key)  ;note does not ever test with fixed-keys-ht-equal
-                                  (return-from ht-equalp-key value)))
+                                  (return-from equalp-keys value)))
                               ght))))
 
 
@@ -672,7 +675,7 @@
     (list-database (problem-state.idb (solution.goal soln)))))
 
 
-(defun print-search-progress ()
+(defun print-search-progress (open)
   "Printout of nodes expanded so far during search modulo reporting interval."
   (bt:with-lock-held (*lock*)
     (when (<= (- *progress-reporting-interval* (- *total-states-processed* *prior-total-states-processed*))
@@ -687,7 +690,7 @@
                   #-sbcl (genhash:generic-hash-table-size *closed*)))
         (format t "~%net average branching factor = ~:D" (round *average-branching-factor*))
         (iter (while (and *rem-init-successors*
-                          (not (idb-in-open (problem-state.idb (node.state (first *rem-init-successors*)))))))
+                          (not (idb-in-open (problem-state.idb (node.state (first *rem-init-successors*))) open))))
               (pop-global *rem-init-successors*))
         (when (< *threads* 2)
           (format t "~%current progress: in #~:D of ~:D initial branches"

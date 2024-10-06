@@ -52,9 +52,8 @@ Dave Brown, davypough@gmail.com
 4. Enter `(in-package :ww)` to switch from the cl-user package to the wouldwork package
 5. Enter `(run-test-problems)` to verify everything is loaded & working properly
 6. Enter `(list-all)` to display all pre-defined problem specifications in the src directory
-7. Create your own problem specification by emulating any of the `problem-<label>.lisp` files in the src directory
-8. Enter `(run "<label>")` to tell Wouldwork to search for a solution to your problem.
-
+7. Create your own problem specification by emulating any of the `problem-<name>.lisp` files in the src directory
+8. Enter `(run "<name>")` to tell Wouldwork to search for a solution to your problem.
 
 
 # Additional Information
