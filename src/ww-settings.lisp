@@ -41,17 +41,21 @@
 
 
 (defun cleanup-resources ()
-  (format t "~&Cleaning up resources and shutting down threads...~%")
-  (let ((current-thread sb-thread:*current-thread*))
-    (dolist (thread (sb-thread:list-all-threads))
-      (unless (eq thread current-thread)
-        (when (sb-thread:thread-alive-p thread)
-          (format t "~&Terminating thread: ~A~%" thread)
-          (ignore-errors
-            (sb-thread:terminate-thread thread))))))
-  (format t "~&Cleanup completed.~%"))
+  #+sbcl
+  (progn (format t "~&Cleaning up resources and shutting down threads...~%")
+         (let ((current-thread sb-thread:*current-thread*))
+           (dolist (thread (sb-thread:list-all-threads))
+             (unless (eq thread current-thread)
+               (when (sb-thread:thread-alive-p thread)
+                 (format t "~&Terminating thread: ~A~%" thread)
+                 (ignore-errors
+                   (sb-thread:terminate-thread thread))))))
+           (format t "~&Cleanup completed.~%"))
+  #-sbcl
+  nil)
 
-(pushnew 'cleanup-resources sb-ext:*exit-hooks*)
+
+#+sbcl (pushnew 'cleanup-resources sb-ext:*exit-hooks*)
 
 
 ;; after loading set the global values to what was in "vals.lisp"
@@ -71,7 +75,7 @@
   (setf *features* (remove :ww-debug *features*)))
 
 
-(defparameter *lock* (bt:make-lock))  ;for thread protection
+#+sbcl (defparameter *lock* (bt:make-lock))  ;for thread protection
 
 ;#+sbcl
 ;(if (> *threads* 0)
@@ -98,6 +102,7 @@
 (defparameter *global-locks* (make-hash-table))  ;Used for non-sbcl implementations
 
 
+#+sbcl
 (defun ensure-global-lock (var-name)
   "Store one lock for each global variable. Used for non-sbcl implementations."
   (or (gethash var-name *global-locks*)
@@ -126,9 +131,11 @@
         `(incf ,var-name ,delta-form))
      #-sbcl
      ,(if (> *threads* 0)
-       `(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
-         (incf ,var-name ,delta-form))
-       `(incf ,var-name ,delta-form))))
+        (format t "~2%Sorry, multi-threading only supported in SBCL.
+                   Please set *threads* to 0 in ww-settings.lisp~%")
+        ;`(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
+         ;(incf ,var-name ,delta-form))
+        `(incf ,var-name ,delta-form))))
 
 
 (defmacro push-global (item var-name)
@@ -140,9 +147,11 @@
         `(push ,item ,var-name))
      #-sbcl
      ,(if (> *threads* 0)
-       `(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
-         (push ,item ,var-name))
-       `(push ,item ,var-name))))
+        (format t "~2%Sorry, multi-threading only supported in SBCL.
+                   Please set *threads* to 0 in ww-settings.lisp~%")
+        ;`(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
+        ; (push ,item ,var-name))
+        `(push ,item ,var-name))))
 
 
 (defmacro pop-global (var-name)
@@ -154,8 +163,10 @@
         `(pop ,var-name))
      #-sbcl
      ,(if (> *threads* 0)
-       `(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
-         (pop ,var-name))
+        (format t "~2%Sorry, multi-threading only supported in SBCL.
+                   Please set *threads* to 0 in ww-settings.lisp~%")
+        ;`(bordeaux-threads:with-lock-held ((gethash ',var-name *global-locks*))
+        ; (pop ,var-name))
        `(pop ,var-name))))
 
 

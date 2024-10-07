@@ -61,7 +61,7 @@
         (remhash key table))  ;key's value is now nil so remove it
       (vector-pop vector))
     #-sbcl
-    (let (values (genhash:hashref key table))  ;key guaranteed to be in table with list of values
+    (let ((values (genhash:hashref key table)))  ;key guaranteed to be in table with list of values
       (pop values)
       (when (null values)
         (genhash:hashrem key table))  ;key's value is now nil so remove it

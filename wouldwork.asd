@@ -15,7 +15,7 @@
   :homepage "https://github.com/davypough/quick-wouldwork"
   :bug-tracker "https://github.com/davypough/quick-wouldwork/issues"
   :source-control (:git "https://github.com/davypough/quick-wouldwork.git")
-  :depends-on (:alexandria :iterate :lparallel
+  :depends-on (:alexandria :iterate #+sbcl :lparallel
                #-sbcl :genhash
                #-sbcl :trivial-backtrace
                #-sbcl :metering)
@@ -39,7 +39,7 @@
 		             (:file "problem")
 		             (:file "ww-searcher")
 		             (:file "ww-planner")
-		             (:file "ww-parallel")
+		             #+sbcl (:file "ww-parallel")
 		             (:file "ww-initialize"))))
   ;; Build a binary:
   ;; don't change this line.

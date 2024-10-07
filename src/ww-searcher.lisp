@@ -25,6 +25,8 @@
     (apply fn args)))
 |#
 
+
+#+sbcl
 (defmacro lprt (&rest vars)
   "Print some variable values in a thread for debugging."
   `(bt:with-lock-held (*lock*)  ;grab lock for uninterrupted printing
@@ -645,8 +647,8 @@
                                                  *state-codes*)))))
              :goal goal-state)))
     (cond ((> *threads* 0)
-             #+:ww-debug (when (>= *debug* 1)
-                                  (lprt))
+             #+(and ww-debug sbcl) (when (>= *debug* 1)
+                                       (lprt))
              (let ((ctrl-str "~&New path to goal found at depth = ~:D~%"))
                (bt:with-lock-held (*lock*)
                  (if (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
