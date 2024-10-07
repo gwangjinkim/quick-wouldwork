@@ -50,6 +50,10 @@
         (incf *counter*)))))
 
 
+(defparameter *shutdown-requested* nil
+  "Variable used to signal threads shutdown, if *threads* > 0")
+
+
 (defparameter *open* (hs::make-hstack)  ;initialized in dfs
   "The hash-stack structure containing the stack of open nodes as a vector,
    and hash table of idb -> node.")
@@ -174,9 +178,10 @@
     (process-threads)
     (search-serial))
   (let ((*package* (find-package :ww)))  ;avoid printing package prefixes
-    (summarize-search-results (if (eql *solution-type* 'first)
-                                'first
-                                'exhausted))))
+    (unless *shutdown-requested*
+      (summarize-search-results (if (eql *solution-type* 'first)
+                                  'first
+                                  'exhausted)))))
 
 
 (defun search-serial ()
