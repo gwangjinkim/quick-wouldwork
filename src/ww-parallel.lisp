@@ -19,24 +19,6 @@
   (signal 'thread-error :original-error condition))
 
 
-(define-condition thread-error (error)  ;condition for signaling errors across threads
-  ((original-error :initarg :original-error :reader original-error)))
-
-
-(defun handle-thread-error (condition)
-  "Handle errors in threads by signaling shutdown and printing error information."
-  (let ((*print-pretty* nil))
-    (format *error-output* 
-            "~2%Error in thread ~A: ~A~%Initiating shutdown.~%Backtrace:~%~A~%"
-            (lparallel:kernel-worker-index)  ;(bt:current-thread)
-            condition
-            (with-output-to-string (s)
-              (sb-debug:print-backtrace :stream s :count 20))))
-  (force-output *error-output*)
-  (setf *shutdown-requested* t)
-  (signal 'thread-error :original-error condition))
-
-
 (defun process-threads ()
   "The main consumer of parallel thread processing with controlled shutdown."
   (setf lparallel:*kernel* (lparallel:make-kernel *threads*))
