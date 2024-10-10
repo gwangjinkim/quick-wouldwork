@@ -327,8 +327,14 @@ USE MULTIPLE CORES:
     (destructuring-bind 
         (keep-globals-p tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
          tmp-progress-reporting-interval tmp-randomize-search tmp-branch tmp-probe tmp-debug tmp-features)
-        (or (ignore-errors (read-from-file *globals-file*))
-            default-values)
+        (let ((vals (or (ignore-errors (read-from-file *globals-file*))
+                        default-values)))
+          (if (= (length vals) (length default-values)) ;; because we change globals often number of values in vals.lisp can differ
+              vals
+              (progn
+                (format t "Using `default-values` (length ~A) because length of vals.lisp differs (~A).~%"
+                        (length default-values) (length vals))
+                default-values)))
       (when keep-globals-p
         (setf *keep-globals-p* keep-globals-p
               *depth-cutoff* tmp-depth-cutoff
