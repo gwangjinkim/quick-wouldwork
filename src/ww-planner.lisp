@@ -151,7 +151,7 @@
 (defun initialize-act-state (action state updated-db)
   "Returns a new child of state incorporating action updated-db list,
    or nil if repeating previous wait action."
-  (declare (type action action) (problem-state state) (update updated-db))
+  (declare (type action action) (type problem-state state) (type update updated-db))
   (unless (and *happening-names*
                (eql (action.name action) 'wait)
                (eql (problem-state.name state) 'wait))  ;previous state is also wait

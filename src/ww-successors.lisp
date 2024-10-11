@@ -42,7 +42,7 @@
 (defun detect-goals (current-node succ-states)
   ;Must be compiled with (debug 3)
   (declare (optimize (debug 3)))
-  (declare (list succ-states) (ignorable current-node))
+  (declare (type list succ-states) (ignorable current-node))
   (iter (for state in succ-states)
      (cond ((goal state)
               (collect state into goal-succ-states)
@@ -75,7 +75,7 @@
 
 (defun process-nongoal-succ-states (current-node nongoal-succ-states)
   "Determines how to handle nongoal succ states for both tree or graph search."
-  (declare (node current-node) (list nongoal-succ-states))
+  (declare (type node current-node) (type list nongoal-succ-states))
   (loop with succ-nodes
         for state in nongoal-succ-states
         do (ut::mvb (message succ-node)   
@@ -128,7 +128,7 @@
   "Decides how to process the next successor state. Returns whether or not the
    current node still has life (ie, potential successors)."
   (declare (optimize (debug 3)))
-  (declare (node current-node) (problem-state succ-state))
+  (declare (type node current-node) (type problem-state succ-state))
   (increment-global-fixnum *total-states-processed*)
   ;(print-search-progress)       ;#nodes expanded so far
   (when (at-max-depth (1+ (node.depth current-node)))  ;at max depth, if *depth-cutoff* specified
@@ -202,7 +202,7 @@
   "Decides how to process the next successor state. Returns whether or not the
    current node still has life (ie, potential successors)."
   (declare (optimize (debug 3)))
-  (declare (node current-node) (problem-state succ-state))
+  (declare (type node current-node) (type problem-state succ-state))
   (increment-global-fixnum *total-states-processed*)
   ;(print-search-progress)       ;#nodes expanded so far
   (when (on-current-path succ-state current-node)

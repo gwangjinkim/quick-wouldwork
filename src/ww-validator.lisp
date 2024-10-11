@@ -114,7 +114,7 @@
   (check-type pre-parameter-list list)
   (iter (with state = 0)  ;0 is starting state, 1 is after finding a ?var-form 
         (for item in pre-parameter-list)
-        (ecase state
+        (case state
           (0 (or (when (header-p item)
                    (setf state 0))
                  (when (subspec-p item)
@@ -156,7 +156,7 @@
   (check-type property-list cons)
   (iter (for (happening-keyword happening-property) on property-list by #'cddr)
         (check-type happening-keyword keyword)
-        (ecase happening-keyword
+        (case happening-keyword
           (:inits (check-type happening-property list)
                   (iter (for proposition in happening-property)
                         (check-proposition proposition)))

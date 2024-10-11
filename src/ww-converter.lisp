@@ -91,24 +91,23 @@
 
 (defun subst-int-code (code-tree)
   (labels ((process-item (item)
-             (cond
-               ((atom item) item)
-               ((not (typep item 'alexandria:proper-list)) item)
-               ((and (consp item) (eql (first item) 'gethash)
-                     (consp (second item)) (eql (first (second item)) 'list))
-                (list (first item)
-                      (convert-prop-list (second item))
-                      (cond
-                        ((equal (third item) '(problem-state.db state))
-                         '(problem-state.idb state))
-                        ((eql (third item) '*static-db*)
-                         '*static-idb*)
-                        ((eql (third item) 'idb)
-                         'idb)
-                        ((equal (third item) '(merge-db-hdb state))
-                         '(merge-idb-hidb state))
-                        (t (error "Error in subst-int-code: ~A" (third item))))))
-               (t (mapcar #'process-item item)))))
+             (cond ((atom item) item)
+                   ((not (typep item 'alexandria:proper-list)) item)
+                   ((and (consp item)
+                         (eql (first item) 'gethash)
+                         (consp (second item)) (eql (first (second item)) 'list))
+                      (list (first item)
+                            (convert-prop-list (second item))
+                            (cond ((equal (third item) '(problem-state.db state))
+                                     '(problem-state.idb state))
+                                  ((eql (third item) '*static-db*)
+                                     '*static-idb*)
+                                  ((eql (third item) 'idb)
+                                     'idb)
+                                  ((equal (third item) '(merge-db-hdb state))
+                                     '(merge-idb-hidb state))
+                                  ((error "Error in subst-int-code: ~A" (third item))))))
+                   (t (mapcar #'process-item item)))))
     (process-item code-tree)))
 
 
@@ -138,9 +137,7 @@
                                  `(* (gethash ,item *constant-integers*) ,multiplier))
                               ((numberp item)
                                  (* (gethash item *constant-integers*) multiplier))
-                              (t (error "Error in convert-prop-list: ~A invalid in ~A"
-                                        item prop-list))))
+                              ((error "Error in convert-prop-list: ~A invalid in ~A"
+                                       item prop-list))))
         (collect new-item into new-items)
         (finally (return (cons '+ new-items)))))
-        
-

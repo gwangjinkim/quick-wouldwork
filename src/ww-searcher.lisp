@@ -81,11 +81,15 @@
                (iter (for arg in args)
                      (when ($varp arg)
                        (let ((lisp-$type (trim-1st-char arg)))
-                         (unless (gethash lisp-$type *types*))  ;user defined type
-                           (pushnew lisp-$type lisp-$types)))))  ;should be a lisp type
+                         (unless (gethash lisp-$type *types*)  ;user defined type
+                           (pushnew lisp-$type lisp-$types))))))  ;should be a lisp type
              relations)
     (cond ((intersection '(hash-table vector array) lisp-$types) #'equalp)  ;for complex containers
           (t #'equal))))  ;remember ht-values are always lists of items, not atoms
+
+
+(defparameter *fixed-ht-values-fn* (choose-ht-value-test *relations*)
+  "Determines which equality test to use in fixed-keys-ht-equal.")
 
 
 (defun fixed-keys-ht-equal (ht-key1 ht-key2)
@@ -106,10 +110,6 @@
                (setf hash (logxor hash (sxhash val))))
              ht)
     hash))
-
-
-(defparameter *fixed-ht-values-fn* (choose-ht-value-test *relations*)
-  "Determines which equality test to use in fixed-keys-ht-equal.")
 
 
 #+sbcl
@@ -205,8 +205,8 @@
         (setf succ-nodes (subseq succ-nodes *branch* (1+ *branch*))))
       (setf *num-init-successors* (length succ-nodes))
       (setf *rem-init-successors* (reverse succ-nodes)))
-    (loop for succ-node in succ-nodes
-          do (hs::push-hstack succ-node *open* :new-only (eq *tree-or-graph* 'graph)))  ;push lowest heuristic value last
+    (iter (for succ-node in succ-nodes)
+          (hs::push-hstack succ-node *open* :new-only (eq *tree-or-graph* 'graph)))  ;push lowest heuristic value last
     (increment-global *program-cycles* 1)  ;finished with this cycle
     (setf *average-branching-factor* (compute-average-branching-factor))
     (print-search-progress *open*)  ;#nodes expanded so far
@@ -301,12 +301,12 @@
 (defun idb-in-open (succ-idb open)
   "Determines if an idb hash table's contents match the contents of a key in open's table.
    Returns the node in open or nil."
-   (declare (hash-table succ-idb))
+   (declare (type hash-table succ-idb))
   #+sbcl (let ((ht (hs::hstack.table open)))
            (block equality-keys
              (maphash (lambda (open-idb nodes)  ;nodes should contain only one node
                         ;(unless (hash-table-p open-idb) (bt:with-lock-held (*lock*) (ut::print-ht ht) (terpri)))
-                        (declare (hash-table open-idb) (cons nodes))
+                        (declare (type hash-table open-idb) (type cons nodes))
                         (when (funcall (hash-table-test ht) succ-idb open-idb)
                           (return-from equality-keys (car nodes))))
                       ht)))
@@ -346,14 +346,20 @@
         (best-value (problem-state.value (first *best-states*))))
     (ecase *solution-type*
       (max-value (when (> current-value best-value)
-                   (bt:with-lock-held (*lock*) (format t "~&Higher value state found: ~A in thread ~D~%"
-                                                         (problem-state.value succ-state) (lparallel:kernel-worker-index))
-                                               (finish-output))
+                   #+sbcl (bt:with-lock-held (*lock*)
+                            (format t "~&Higher value state found: ~A in thread ~D~%"
+                                      (problem-state.value succ-state) (lparallel:kernel-worker-index))
+                            (finish-output))
+                   #-sbcl (format t "~&Higher value state found: ~A~%"
+                                    (problem-state.value succ-state))
                    (push-global succ-state *best-states*)))
       (min-value (when (< current-value best-value)
-                   (bt:with-lock-held (*lock*) (format t "~&Lower value state found: ~A in thread ~D~%"
-                                                         (problem-state.value succ-state) (lparallel:kernel-worker-index))
-                                               (finish-output))
+                   #+sbcl (bt:with-lock-held (*lock*)
+                            (format t "~&Lower value state found: ~A in thread ~D~%"
+                                      (problem-state.value succ-state) (lparallel:kernel-worker-index))
+                            (finish-output))
+                   #-sbcl (format t "~&Lower value state found: ~A~%"
+                                    (problem-state.value succ-state))
                    (push-global succ-state *best-states*))))))
 
  
@@ -411,8 +417,10 @@
                 (narrate "State killed by bounding" (node.state current-node) (node.depth current-node))
                 #+:ww-debug (when (>= *debug* 3)
                               (format t "~&current-cost = ~F > *upper-bound* = ~F~%" current-cost *upper-bound*))
-                (bt:with-lock-held (*lock*) (format t "bounding a state...")
-                                            (finish-output))
+                #+sbcl (bt:with-lock-held (*lock*)
+                         (format t "bounding a state...")
+                         (finish-output))
+                #-sbcl (format t "bounding a state...")
                 (return-from bounding-function 'kill-node))
              ((< current-upper *upper-bound*)
                 #+:ww-debug (when (>= *debug* 3)
@@ -655,16 +663,20 @@
              #+(and ww-debug sbcl) (when (>= *debug* 1)
                                        (lprt))
              (let ((ctrl-str "~&New path to goal found at depth = ~:D~%"))
-               (bt:with-lock-held (*lock*)
-                 (if (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
-                   (format t (concatenate 'string ctrl-str "Objective value = ~:A~2%")
-                             state-depth (solution.value solution))
-                   (format t ctrl-str state-depth)))))
-           (t (format t "~%New path to goal found at depth = ~:D~%" state-depth)
-              (when (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
-                (format t "Objective value = ~:A~%" (solution.value solution)))
-              (when (eql *solution-type* 'min-time)
-                (format t "Time = ~:A~%" (solution.time solution)))))
+               #+sbcl (bt:with-lock-held (*lock*)
+                        (if (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
+                          (format t (concatenate 'string ctrl-str "Objective value = ~:A~2%")
+                                    state-depth (solution.value solution))
+                          (format t ctrl-str state-depth)))
+               #-sbcl (if (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
+                        (format t (concatenate 'string ctrl-str "Objective value = ~:A~2%")
+                                  state-depth (solution.value solution))
+                        (format t ctrl-str state-depth))))
+          (t (format t "~%New path to goal found at depth = ~:D~%" state-depth)
+             (when (or (eql *solution-type* 'min-value) (eql *solution-type* 'max-value))
+               (format t "Objective value = ~:A~%" (solution.value solution)))
+             (when (eql *solution-type* 'min-time)
+               (format t "Time = ~:A~%" (solution.time solution)))))
     (narrate "Solution found ***" goal-state state-depth)
     (push-global solution *solutions*)
     (when (not (member (problem-state.idb (solution.goal solution)) *unique-solutions* 
@@ -683,8 +695,13 @@
 
 
 (defun print-search-progress (open)
+  #+sbcl (bt:with-lock-held (*lock*)
+           (printout-search-progress open))
+  #-sbcl (printout-search-progress open))
+
+
+(defun printout-search-progress (open)
   "Printout of nodes expanded so far during search modulo reporting interval."
-  (bt:with-lock-held (*lock*)
     (when (<= (- *progress-reporting-interval* (- *total-states-processed* *prior-total-states-processed*))
               0)
         (format t "~%program cycles = ~:D" *program-cycles*)
@@ -716,7 +733,7 @@
                                                        internal-time-units-per-second)))
         (finish-output)
         (setf *prior-time* (get-internal-real-time))
-        (setf *prior-total-states-processed* *total-states-processed*))))
+        (setf *prior-total-states-processed* *total-states-processed*)))
 
 
 (defun solve ()

@@ -227,5 +227,5 @@
           
 (defun set-int-bit (value int row col)
   "Returns the new bit-integer with bit-value replaced in int."
-  (declare (bit value) (integer int) (fixnum row col) (special *N*))
+  (declare (type bit value) (type integer int) (type fixnum row col) (special *N*))
   (dpb value (byte 1 (+ (* (- *N* row 1) *N*) (- *N* col 1))) int))

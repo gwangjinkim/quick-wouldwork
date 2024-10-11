@@ -121,7 +121,7 @@
                         :size (hash-table-size set-ht)
                         :rehash-size (hash-table-rehash-size set-ht)
                         :rehash-threshold (hash-table-rehash-threshold set-ht))
-      for key being the hash-key in set-ht using (hash-value value)
+      for key being the hash-keys in set-ht using (hash-value value)
       do (setf (gethash key new-ht) t)
       finally (return new-ht)))
 
@@ -303,8 +303,8 @@
                  (collecting item into types))
               ((eql (first item) 'either)  ;combo type
                  (let ((new-type (intern (ut::interleave+ (ut::sort-symbols (cdr item)))))  ;new combo type
-                       (new-instances (remove-duplicates (loop for type in (cdr item)
-                                                               append (gethash type *types*)))))
+                       (new-instances (remove-duplicates (iter (for type in (cdr item))
+                                                               (append (gethash type *types*))))))
                    (setf (gethash new-type *types*) new-instances)
                    (if (symbolp prior-item)  ;single prior ?variable
                      (collecting new-type into types)
@@ -316,8 +316,8 @@
                    (collecting additional-types into types)))
               (t (error "Problem detected in dissect-pre-params: ~A" pre-param-list)))
         (finally (return (values ?vars types)))))
-       
-        
+
+
 (defun dissect-eff-params (eff-parameter-list)
   "Returns a list of primitive eff-parameter variables and types."
   (iter (for (var-form type-form) on eff-parameter-list by #'cddr)
@@ -346,7 +346,7 @@
               ((and (listp item)
                     (member (first item) *parameter-headers*))
                  (collecting (instantiate-type-spec item))))))
-                 
+
                  
 (defun eval-instantiated-spec (instantiated-pre-type-spec &optional state)
   "Receives possibly nested static or dynamic input from instantiate-type-spec,
@@ -369,7 +369,8 @@
 (defun get-pre-lambda-arg-lists (instantiated-spec)
   "Returns list of instantiations as arg list for a rule precondition."
   (when (or (equal instantiated-spec '(standard))  ;no precondition parameters
-            (equal instantiated-spec '(standard (nil))))
+            ;(equal instantiated-spec '(standard (nil)))
+            (equal instantiated-spec '(standard nil)))
     (return-from get-pre-lambda-arg-lists '((nil))))
   (let ((header (first instantiated-spec))
         (value-lists (cdr instantiated-spec)))

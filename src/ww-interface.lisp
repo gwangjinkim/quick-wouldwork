@@ -167,10 +167,17 @@ USE MULTIPLE CORES:
       (setf result (subseq result 0 (- (length result) (length suffix)))))
     result))
 
-(defun strip-name (str prefix suffix)
+#+ignore (defun strip-name (str prefix suffix)
   "Removes prefix and suffix from str."
   (let ((res (lstrip str prefix)))
     (rstrip res suffix)))
+
+(defun strip-name (str prefix suffix)
+  "Removes prefix and suffix from str."
+  (let* ((without-prefix (lstrip str prefix))
+         (suffix-with-dot (concatenate 'string "." suffix))
+         (result (rstrip without-prefix suffix-with-dot)))
+    result))
 
 ;; -------------------- plist lookup customizable -------------------- ;;
 
@@ -299,7 +306,7 @@ USE MULTIPLE CORES:
   (save-globals))
 
 
-#+nil (defun read-globals ()
+#+ignore (defun read-globals ()
   "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
   (destructuring-bind 
     (keep-globals-p tmp-debug tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
@@ -386,8 +393,7 @@ USE MULTIPLE CORES:
 ;; so using <add-problem-folder> and <remove-problem-folder> each with path,
 ;; user kann add or remove custom folder from the global variable.
 
-
-(defun list-problem-files-plist (&optional (prefix "problem-*") (suffix "lisp"))
+#+ignore (defun list-problem-files-plist (&optional (prefix "problem-*") (suffix "lisp"))
   "Return a plist of files in the 'src' directory that start with 'problem-'.
    The key is the filename without 'problem-' and '.lisp'.
    The value is the full path of the file. Uses the root directory of the 'wouldwork' system."
@@ -406,9 +412,27 @@ USE MULTIPLE CORES:
 	  (setq result (append result (list name file))))))
     result))
 
+(defun list-problem-files-plist (&optional (prefix "problem-") (suffix "lisp"))
+  "Return a plist of files in the 'src' directory that start with 'problem-'.
+   The key is the filename without 'problem-' and '.lisp'.
+   The value is the full path of the file. Uses the root directory of the 'wouldwork' system."
+  (let ((files)
+        (result))
+    (loop for dir in *problem-folder-paths*
+          do (let ((path (format nil "~A~A*.~A" (namestring dir) prefix suffix)))
+               (setf files (append (directory path) files))))
+    (dolist (file files)
+      (let* ((filename (file-namestring file))
+             (name (strip-name filename prefix suffix)))
+        (when (and (string-prefix-p prefix filename)
+                   (string-suffix-p (concatenate 'string "." suffix) filename))
+          (push name result)
+          (push file result))))
+    (nreverse result)))
+
 (defun list-problem-names ()
   (let* ((plist (list-problem-files-plist)))
-    (loop for (k v) on plist by #'cddr
+    (loop for (k nil) on plist by #'cddr
 	  collect k)))
 
 (defun exchange-problem-file (problem-name &optional (problem-file "problem.lisp"))
@@ -464,7 +488,7 @@ USE MULTIPLE CORES:
 					                               (*print-pretty* . t))))
      ,@body))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
+#+ignore (defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
   (with-silenced-compilation
       (let ((problem-names (list-problem-names)))
 	(loop for problem in problem-names
@@ -488,9 +512,39 @@ USE MULTIPLE CORES:
 			      (t
 			       (format t "Error at problem ~a~%~%" problem)
 			       (return nil))))))))
+
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
+  (with-silenced-compilation
+    (let ((problems-to-run *problem-files*)
+          (total-problems 0)
+          (problems-processed 0))
+      (loop for problem in problems-to-run
+            do (progn
+                 (incf total-problems)
+                 (let* ((problem-name (if (string-prefix-p "problem-" problem)
+                                          (subseq problem 8 (- (length problem) 5))
+                                          (subseq problem 0 (- (length problem) 5)))))
+                   (format t "~%=====================================================~%")
+                   (format t "Processing problem: \"~A\"~%" problem-name)
+                   (format t "=====================================================~%")
+                   (handler-case
+                       (progn
+                         (if with-reload-p
+                             (reload-with-new-problem problem-name :problem-file problem-file :keep-globals-p keep-globals-p)
+                             (exchange-problem-file problem-name problem-file))
+                         (incf problems-processed)
+                         (solve))
+                     (error (e)
+                       (format t "Error occurred while processing problem ~a: ~a~%" problem-name e)
+                       (format t "Skipping to next problem.~%"))))))
+      (format t "~%~%Final Summary:~%")
+      (format t "Total problems in list: ~D~%" total-problems)
+      (format t "Problems processed: ~D~%" problems-processed)
+      (format t "~%Note: Problem processing encountered no errors, but the final solutions were not verified.~%")
+      t)))
+
 ;; alias:
 (setf (fdefinition 'run-all) #'run-test-problems)
-
 
 
 (defun run (problem-name &key (with-reload-p t) (keep-globals-p nil))

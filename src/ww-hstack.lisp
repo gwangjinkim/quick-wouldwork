@@ -91,7 +91,7 @@
 
 (defun deletef-nth-hstack (n hstk)
   "Deletes the nth entry in a hash stack and returns it."
-  (declare (type fixnum n) (hstack hstk))
+  (declare (type fixnum n) (type hstack hstk))
   (let* ((vec (hstack.vector hstk))
          (tbl (hstack.table hstk))
          (nth-entry (aref vec n))
