@@ -7,6 +7,7 @@
 
 (in-package :ww)  ;required
 
+
 (ww-set *problem-name* array-path)
 
 (ww-set *problem-type* planning)
