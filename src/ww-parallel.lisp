@@ -1,3 +1,8 @@
+;;; Filename: ww-parallel.lisp
+
+; Functions for managing the multi-threading pool
+
+
 (in-package :ww)
 
 

@@ -52,8 +52,8 @@
                   (format t "~%*threads* cannot be changed with ww-set.")
                   (format t "~%Instead, set its value in the file settings.lisp, and then exit and restart SBCL.~2%"))))
        ((*problem-name* *problem-type*)
-        (progn (setq ,param ,(if (symbolp val) `',val val))
-               (unless *ww-loading*
-                 (format t "~%Please set the parameter ~A in the problem specification file, not in the REPL.~%" ',param))))
+        (if *ww-loading*
+          (setq ,param ,(if (symbolp val) `',val val))
+          (format t "~%Please set the parameter ~A in the problem specification file, not in the REPL.~%" ',param)))
        (otherwise
         (format t "~%~A is not a valid parameter name in ww-set.~%" ',param)))))

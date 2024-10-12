@@ -128,6 +128,7 @@
       (lambda (updated-db)  ;process one update structure
         (let ((act-state (initialize-act-state action state updated-db))  ;act-state from action
               net-state new-state)
+          (declare (ignorable net-state))
           (when act-state  ;no new act-state if wait action was cancelled
             (if *happening-names*
               (ut::mvs (net-state new-state) (amend-happenings state act-state))  ;check for violation

@@ -121,7 +121,7 @@
                         :size (hash-table-size set-ht)
                         :rehash-size (hash-table-rehash-size set-ht)
                         :rehash-threshold (hash-table-rehash-threshold set-ht))
-      for key being the hash-keys in set-ht using (hash-value value)
+      for key being the hash-keys in set-ht ;using (hash-value value)
       do (setf (gethash key new-ht) t)
       finally (return new-ht)))
 
