@@ -11,7 +11,7 @@
 THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
 
 (run <problem-name>) eg, (run \"blocks3\")
-   -- solve a problem
+   -- load and solve a problem
 
 (run-test-problems) alias (run-all)
    -- solve all test problems
@@ -20,6 +20,14 @@ THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
    -- lists all currently specifed problems
       in the src directory (use names with run)
 
+(stage <problem-name>) eg, (stage \"blocks3\")
+  -- loads a problem into wouldwork, usually for debugging purposes,
+     without attempting to solve it
+
+(solve)
+  -- attempts to solve the currently staged problem
+     with the currently staged parameters
+
 (get-src-folder-path)
    -- the location where all problem specification files should appear
 
@@ -27,7 +35,7 @@ THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
    -- employs a basic profiler on the problem last run
 
 (display-current-parameters) alias (display-all)
-   -- displays all parameters associated with the problem last run
+   -- displays all parameters associated with the currently staged problem
 
 (ww-set <problem-parameter> <new-value>)
    -- set a problem parameter to a new value
@@ -47,10 +55,8 @@ THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
            -- probe enables debugging when a state is reached during search
            -- see ww-settings.lisp and User Manual for probe format examples
 
-Note that setting any problem parameters at the REPL with ww-set will be overwritten
-by any settings appearing in the problem specification file. Remove (or comment out)
-specific parameter settings in the problem specification file to enable REPL control
-over their values--eg, *depth-cutoff*, *tree-or-graph* etc.
+Note that setting any problem parameters at the REPL with ww-set will override
+any such settings appearing in the problem specification file.
 "))
 
 
@@ -437,6 +443,17 @@ over their values--eg, *depth-cutoff*, *tree-or-graph* etc.
              (solve))
             (t
              (format t "The problem \"~a\" was not found. Please check spelling (and the path)." problem-name)))))
+
+
+(defun stage (problem-name)
+  "Loads a specified problem to be subsequently solved. This allows the user to verify/debug their problem
+   specification, and check the current parameters, without asking wouldwork to solve it as run does.
+   Once the problem loads correctly, it can then be solved with a follow-up (solve) command."
+  (with-silenced-compilation
+    (reload-with-new-problem problem-name)))
+
+(defun solve ()
+  (ww-solve))
 
 
 (defun list-all (&optional (prettyp nil))

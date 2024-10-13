@@ -736,7 +736,7 @@
         (setf *prior-total-states-processed* *total-states-processed*)))
 
 
-(defun solve ()
+(defun ww-solve ()
   "Runs a branch & bound search on the problem specification."
   (if (> *threads* 0)
     (format t "~%working with ~D thread(s)...~2%" *threads*)
