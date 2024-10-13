@@ -22,6 +22,7 @@
 ;Example probes:
 ;   Stops at specified node, for debugging given 
 ;   (<action name> <instantiations> <depth> &optional <count>)
+;   (ww-set *probe* (put (C A) 3))  ;problem blocks3
 ;   (ww-set *probe* (wait (1 area4) 11))
 ;   (ww-set *probe* (pour (jug4 9 jug2 0 4) 5))
 ;   (ww-set *probe* (move (AREA1 AREA8) 3 5))  ;problem-crater

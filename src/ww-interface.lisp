@@ -425,6 +425,8 @@ over their values--eg, *depth-cutoff*, *tree-or-graph* etc.
 (defun run (problem-name &key (with-reload-p t))  ; (keep-globals-p nil))
   "Loads, reloads and solves a single problem."
   (unless (string-equal problem-name *current-problem-name*)
+    (setf *debug* 0)
+    (setf *probe* nil)
     (makunbound '*keep-globals-p*))  ;forget user repl set globals if switching problems
   (setf *current-problem-name* problem-name)
   (with-silenced-compilation
