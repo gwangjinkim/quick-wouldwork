@@ -59,8 +59,8 @@
   (when (and (> *threads* 0) (> *debug* 1))
     (setf *debug* 1)
     (format t "~%ADVISORY: Currently set to run parallel threads. Resetting *debug* to 1.~%"))
-  (when *keep-globals-p*  ;; this overtakes the globals only when
-    (read-globals))       ;; keep-globals-p in vals.lisp was set to T
+  (when (and (boundp '*keep-globals-p*) (symbol-value '*keep-globals-p*))  ;; this overtakes the globals only when
+     (read-globals))                   ;; keep-globals-p in vals.lisp was set to T                        
   (display-current-parameters)
   (setf *ww-loading* nil))
 
@@ -78,9 +78,6 @@
       (setf instantiations nil)
       (setf name 'start)))
   (do-init-action-updates *start-state*))  ;updates start-state db & static-db, but not idb & hidb yet
-
-
-
 
 
 (defun display-current-parameters ()

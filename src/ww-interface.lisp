@@ -54,77 +54,6 @@ over their values--eg, *depth-cutoff*, *tree-or-graph* etc.
 "))
 
 
-#+nil (defun help ()  ;;; text which appears if user enters (help)
-  (format t "
-;; --------------------- WOULDWORK (2024) Dave Brown <davypough@gmail.com> ----------------- ;;
-
-INSTALLATION AND START:
-
-      ;; when you git-cloned the respository, then you can manually load the asd file
-      ;; to asdf
-      (asdf:load-asd \"/path/to/wouldwork/wouldwork.asd\")
-      ;; after that, you can (ql:quickload :wouldwork) without any problems.
-      ;; you can place this to your personal .sbclrc file so that it asdf and quicklisp always
-      ;; can recognize your package and its position in the system.
-
-      (ql:quickload :wouldwork)  ;; install/load/import wouldwork package
-      (in-package :wouldwork)    ;; enter the namespace
-                                 ;; otherwise you need to prepone 'ww:' to your commands
-
-ADD YOUR PROBLEM FOLDER:
-
-      ;; the problem folder is in the package source folder 'src' in your quicklisp's local-folder
-      ;; to see the exact location of your package, you can run:
-      (ww::get-package-root :wouldwork)
-      (get-src-folder-path)   ;; returns the exact location where you should place your
-                                 ;; problem-<name>.lisp files - replace <name> by your problem name.
-
-      ;; but if you want to add your problem files to a custom folder,
-      ;; add them in this way:
-      (add-problem-folder #P\"/path/to/your/folder/\")
-
-      ;; this returns a list of all folder paths in which wouldwork will search for problem folders
-      ;; this list of folders is saved in the global variable
-      *problem-folder-paths*
-
-      ;; to remove your custom folder, run:
-      (remove-problem-folder #P\"/path/to/your/folder/\")
-
-SOLVE PROBLEMS:
-
-SOLVE A SINGLE PROBLEM:
-
-      (list-all)
-
-      ;; pick one of the listed problems, e.g. \"array-path\" and run (load and solve) the problem:
-
-      (run \"array-path\")
-
-SOLVE ALL AVAILABLE PROBLEMS:
-
-      (run-test-problems)
-      
-      ;; or shorter:
-
-      (run-all)
-
-USE MULTIPLE CORES:
-      
-      ;; use 3 cores
-      (setf *threads* 3)
-
-      ;; don't use parallelization
-      (setf *threads* 0) ;; default value
-
-      ;; how many cores are available?
-      (ql:quickload :serapeum) ;; serapeum is the follow up of the alexandria package
-      (serapeum:count-cpus) ;; => will tell you how many cores your computer has
-
-
-;; --------------------- WOULDWORK (2024) Dave Brown <davypough@gmail.com> ----------------- ;;
-"))
-
-
 (defun %main (argv)
   "Parse CLI args."
   (when (member "-h" argv :test #'equal)
@@ -166,11 +95,6 @@ USE MULTIPLE CORES:
     (when (string-suffix-p suffix result)
       (setf result (subseq result 0 (- (length result) (length suffix)))))
     result))
-
-#+ignore (defun strip-name (str prefix suffix)
-  "Removes prefix and suffix from str."
-  (let ((res (lstrip str prefix)))
-    (rstrip res suffix)))
 
 (defun strip-name (str prefix suffix)
   "Removes prefix and suffix from str."
@@ -237,9 +161,11 @@ USE MULTIPLE CORES:
 	    while line
 	    do (write-line line out)))))
 
+
 (defun save-to-file (list filename)
   (with-open-file (out filename :direction :output :if-exists :supersede :if-does-not-exist :create)
     (format out "~S" list)))
+
 
 (defun read-from-file (filename &optional (default '()))
   (if (probe-file filename)  ; Check if the file exists
@@ -258,28 +184,28 @@ USE MULTIPLE CORES:
    the values of these global variables. The user should not
    have to worry about the changes of these values after reloading.")
 
+
 (defun display-globals ()
-  (format t "~&*keep-globals-p* ~A~%*depth-cutoff* ~A~%*tree-or-graph* ~A~%*solution-type* ~A~%
+  (format t "~& 
+               *depth-cutoff* ~A~%*tree-or-graph* ~A~%*solution-type* ~A~%
                *progress-reporting-interval* ~A~%*randomize-search* ~A~%*branch* ~A~%*probe* ~A~%                                    *debug* ~A~%*features*~%~A~%~%"
-            *keep-globals-p* *depth-cutoff* *tree-or-graph* *solution-type*
+           ;*keep-globals-p*
+            *depth-cutoff* *tree-or-graph* *solution-type*
             *progress-reporting-interval* *randomize-search* *branch* *probe*
             *debug* ;*threads*
             *features*))
 
 
-;(declaim (special *depth-cutoff* *tree-or-graph* *solution-type* 
-;                  *progress-reporting-interval* *randomize-search* 
-;                  *branch* *probe* *debug*))
-
 (defun save-globals ()
   "Save the values of the globals (*keep-globals-p* *debug* *features*) in the vals.lisp file."
   (display-current-parameters)  ;(display-globals)
-  (save-to-file (list *keep-globals-p* *depth-cutoff* *tree-or-graph* *solution-type*
+  (save-to-file (list ;*keep-globals-p*
+                      *depth-cutoff* *tree-or-graph* *solution-type*
                       *progress-reporting-interval* *randomize-search* *branch* *probe* *debug*
                       *features* #|*threads*|#)
                 *globals-file*)) ;; this stores global var values
 
-(defun set-globals (&key (keep-globals-p *keep-globals-p*)
+(defun set-globals (&key ;(keep-globals-p *keep-globals-p*)
                          (depth-cutoff *depth-cutoff*)
                          (tree-or-graph *tree-or-graph*)
                          (solution-type *solution-type*)
@@ -292,7 +218,7 @@ USE MULTIPLE CORES:
                          ;(threads *threads*))
   "Set multiple globals at once in keywords argument format."
   ;(display-globals)
-  (setf *keep-globals-p* keep-globals-p
+  (setf ;*keep-globals-p* keep-globals-p
         *depth-cutoff* depth-cutoff
         *tree-or-graph* tree-or-graph
         *solution-type* solution-type
@@ -306,44 +232,27 @@ USE MULTIPLE CORES:
   (save-globals))
 
 
-#+ignore (defun read-globals ()
-  "Read and setf values for (*keep-globals-p* *debug* *features* *threads*) from vals.lisp file."
-  (destructuring-bind 
-    (keep-globals-p tmp-debug tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
-                    tmp-progress-reporting-interval tmp-randomize-search tmp-branch tmp-probe tmp-features)  ; tmp-threads) 
-      (read-from-file *globals-file* (list nil 0 *features*))  ; 0))
-    (when keep-globals-p
-      (setf *keep-globals-p* keep-globals-p
-            *depth-cutoff* tmp-depth-cutoff
-            *tree-or-graph* tmp-tree-or-graph
-            *solution-type* tmp-solution-type
-            *progress-reporting-interval* tmp-progress-reporting-interval
-            *randomize-search* tmp-randomize-search
-            *branch* tmp-branch
-            *probe* tmp-probe
-            *debug* tmp-debug
-            *features* tmp-features))))
-            ;*threads* tmp-threads))))   ;; this reads-in global variable values and  sets them
 ;; the `keep-globals-p` variable decides over whether the values of `vals.lisp`
 ;; get transferred to the current session.
-;; If *keep-globals-p* is set to `nil`, the `read-globals` call won't change anything.
 
 (defun read-globals ()
   "Read and setf values for global variables from vals.lisp file."
   (let ((default-values (list nil 0 'tree 'first 100000 nil -1 nil 0 *features*)))
     (destructuring-bind 
-        (keep-globals-p tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
+        (;keep-globals-p
+         tmp-depth-cutoff tmp-tree-or-graph tmp-solution-type
          tmp-progress-reporting-interval tmp-randomize-search tmp-branch tmp-probe tmp-debug tmp-features)
         (let ((vals (or (ignore-errors (read-from-file *globals-file*))
                         default-values)))
-          (if (= (length vals) (length default-values)) ;; because we change globals often number of values in vals.lisp can differ
-              vals
-              (progn
-                (format t "Using `default-values` (length ~A) because length of vals.lisp differs (~A).~%"
-                        (length default-values) (length vals))
-                default-values)))
-      (when keep-globals-p
-        (setf *keep-globals-p* keep-globals-p
+          vals)
+          ;(if (= (length vals) (length default-values)) ;; because we change globals often number of values in vals.lisp can differ
+          ;    vals
+          ;    (progn
+          ;      (format t "Using `default-values` (length ~A) because length of vals.lisp differs (~A).~%"
+          ;              (length default-values) (length vals))
+          ;      default-values)))
+      ;(when keep-globals-p
+        (setf ;*keep-globals-p* keep-globals-p
               *depth-cutoff* tmp-depth-cutoff
               *tree-or-graph* tmp-tree-or-graph
               *solution-type* tmp-solution-type
@@ -352,21 +261,18 @@ USE MULTIPLE CORES:
               *branch* tmp-branch
               *probe* tmp-probe
               *debug* tmp-debug
-              *features* tmp-features)))))
+              *features* tmp-features))))
 
-(defun toggle-globals ()
-  (if *keep-globals-p*
-      (setf *keep-globals-p* nil)
-      (setf *keep-globals-p* t))
-  (save-globals))
 
 ;; -------------------- problem.lisp file handling ------------------------ ;;
+
 
 (defparameter *problem-folder-paths* (list (get-src-folder-path))
 "This variable holds all folder pathnames which can hold problems in this system.
    The user cann add custom folder pathnames to this folder using the function
    `add-problem-folder` and remove by `remove-problem-folder`.
    The Package directory's `src` folder, however will always persist.")
+
 
 (defun add-problem-folder (folder-path)
   "Adds an additional path to a folder containing problem-*.lisp files to the
@@ -376,6 +282,7 @@ USE MULTIPLE CORES:
         (push (probe-file path) *problem-folder-paths*)
         (format t "\"~a\" is either not a path to a folder or there are other problems."
                 path))))
+
 
 (defun remove-problem-folder (folder-path)
   "Removes folder-path from global `*problem-folder-paths*` list.
@@ -393,24 +300,6 @@ USE MULTIPLE CORES:
 ;; so using <add-problem-folder> and <remove-problem-folder> each with path,
 ;; user kann add or remove custom folder from the global variable.
 
-#+ignore (defun list-problem-files-plist (&optional (prefix "problem-*") (suffix "lisp"))
-  "Return a plist of files in the 'src' directory that start with 'problem-'.
-   The key is the filename without 'problem-' and '.lisp'.
-   The value is the full path of the file. Uses the root directory of the 'wouldwork' system."
-  (let ((files)
-        (result))
-    (loop for dir in *problem-folder-paths*
-          do (setf files (append
-			  (directory (format nil "~a/~a"
-					     dir
-					     (format nil "~a.~a" prefix suffix)))
-			  files)))
-    (dolist (file files)
-      (let* ((filename (file-namestring file))
-	     (name (strip-name filename "problem-" ".lisp")))
-	(when name
-	  (setq result (append result (list name file))))))
-    result))
 
 (defun list-problem-files-plist (&optional (prefix "problem-") (suffix "lisp"))
   "Return a plist of files in the 'src' directory that start with 'problem-'.
@@ -430,10 +319,12 @@ USE MULTIPLE CORES:
           (push file result))))
     (nreverse result)))
 
+
 (defun list-problem-names ()
   (let* ((plist (list-problem-files-plist)))
     (loop for (k nil) on plist by #'cddr
 	  collect k)))
+
 
 (defun exchange-problem-file (problem-name &optional (problem-file "problem.lisp"))
   "Copies problem path to 'src/problem.lisp'"
@@ -441,9 +332,10 @@ USE MULTIPLE CORES:
 	 (path (lookup problem-name plist)))
     (copy-file-content path (in-src problem-file))))
 
+
 (Defun reload-with-new-problem (problem-name &key (problem-file "problem.lisp") 
-                                                  (system-name :wouldwork) 
-                                                  (keep-globals-p t))
+                                                  (system-name :wouldwork))
+                                                  ;(keep-globals-p t))
   "This function is crucial for loading problems.
    Given a problem-name, it replaces the content of the problem.lisp file by
    the content of the correponsing problem file.
@@ -451,12 +343,13 @@ USE MULTIPLE CORES:
    keep-globals-p determines whether the global variables from the last session should be overtaken."
   (exchange-problem-file problem-name problem-file)
   ;; (asdf:operate 'asdf:load-op :wouldwork :force-not '(:iterate :alexandria :lparallel)))
-  (when keep-globals-p
-    (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features*) ;*threads*)
+  ;(when keep-globals-p
+  ;  (save-globals))                          ;; for persistence of (*keep-globals-p* *debug* *features*) ;*threads*)
   (asdf:load-system system-name :force t))
 
 
 (declaim (ftype (function () t) solve))  ;function solve located in searcher.lisp
+
 
 (defparameter *problem-files*
   '("problem-blocks3.lisp" "problem-blocks4.lisp" "problem-boxes.lisp"
@@ -470,6 +363,7 @@ USE MULTIPLE CORES:
     "problem-knap4a.lisp" "problem-knap4b.lisp" "problem-knap19.lisp"
     "problem-smallspace.lisp")  ;"problem-crater.lisp")
   "List of all problem filenames which are correct.")
+
 
 (defparameter *problem-names* (mapcar (lambda (pn) (strip-name pn "problem-" ".lisp"))
 				      *problem-files*)
@@ -488,32 +382,9 @@ USE MULTIPLE CORES:
 					                               (*print-pretty* . t))))
      ,@body))
 
-#+ignore (defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
-  (with-silenced-compilation
-      (let ((problem-names (list-problem-names)))
-	(loop for problem in problem-names
-	      when (member problem *problem-names* :test #'string=)
-		do (progn
-		     (format t "=====================================================~%~%")
-		     (format t "starting to analyze \"~a\"~%~%" problem)
-		     (format t "=====================================================~%~%")
-		     (if with-reload-p
-                         (reload-with-new-problem problem :problem-file problem-file :keep-globals-p keep-globals-p)
-                         (exchange-problem-file problem problem-file))
-		     (solve)
-		     (format t "=====================================================~%~%")
-		     (format t "problem \"~a\" successfully solved.~%~%" problem)
-		     (format t "=====================================================~%~%"))
-	      finally (progn
-			(exchange-problem-file "array-path" "problem.lisp")
-			(cond ((= (1+ (position problem problem-names :test #'string=)) (length problem-names))
-			       (format t "All problems successfully solved.~%~%")
-			       (return t))
-			      (t
-			       (format t "Error at problem ~a~%~%" problem)
-			       (return nil))))))))
 
-(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t) (keep-globals-p nil))
+(defun run-test-problems (&key (problem-file "problem.lisp") (with-reload-p t))  ; (keep-globals-p nil))
+  (makunbound '*keep-globals-p*)  ;ignores vals.lisp for all test problems
   (with-silenced-compilation
     (let ((problems-to-run *problem-files*)
           (total-problems 0)
@@ -530,7 +401,7 @@ USE MULTIPLE CORES:
                    (handler-case
                        (progn
                          (if with-reload-p
-                             (reload-with-new-problem problem-name :problem-file problem-file :keep-globals-p keep-globals-p)
+                             (reload-with-new-problem problem-name :problem-file problem-file)  ; :keep-globals-p keep-globals-p)
                              (exchange-problem-file problem-name problem-file))
                          (incf problems-processed)
                          (solve))
@@ -543,20 +414,28 @@ USE MULTIPLE CORES:
       (format t "~%Note: Problem processing encountered no errors, but the final solutions were not verified.~%")
       t)))
 
+
 ;; alias:
 (setf (fdefinition 'run-all) #'run-test-problems)
 
 
-(defun run (problem-name &key (with-reload-p t) (keep-globals-p nil))
+(defparameter *current-problem-name* (string *problem-name*))  ;normally specified in problem.lisp
+
+
+(defun run (problem-name &key (with-reload-p t))  ; (keep-globals-p nil))
   "Loads, reloads and solves a single problem."
+  (unless (string-equal problem-name *current-problem-name*)
+    (makunbound '*keep-globals-p*))  ;forget user repl set globals if switching problems
+  (setf *current-problem-name* problem-name)
   (with-silenced-compilation
       (cond ((member problem-name (list-all) :test #'string=)
              (if with-reload-p
-                 (reload-with-new-problem problem-name :keep-globals-p keep-globals-p)
+                 (reload-with-new-problem problem-name)  ; :keep-globals-p keep-globals-p)
                  (exchange-problem-file problem-name)) 
              (solve))
             (t
              (format t "The problem \"~a\" was not found. Please check spelling (and the path)." problem-name)))))
+
 
 (defun list-all (&optional (prettyp nil))
   "List all problem names in the problem folder.

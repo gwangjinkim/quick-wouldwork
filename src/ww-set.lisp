@@ -5,26 +5,15 @@
 (in-package :ww)
 
 
-;(defun function-lambda-expression@ (fn)
-;  "Wrapper for function-lambda-expression which compiles it with (debug 3)."
-;  (let ((incoming-debug (assoc 'debug (sb-cltl2:declaration-information 'optimize))))
-;    (proclaim '(optimize (debug 3)))
-;    (let ((lambda-expression (function-lambda-expression fn)))
-;      (proclaim `(optimize ,incoming-debug))
-;      lambda-expression)))
-
-
 (defmacro ww-set (param val)
   "Allows resetting of user parameters during and after loading."
-  (let ((param-name (symbol-name param)))
     `(case ',param
        ((*depth-cutoff* *tree-or-graph* *solution-type*
          *progress-reporting-interval* *randomize-search* *branch*)
         (progn (setq ,param ,(if (symbolp val) `',val val))
-               (unless *ww-loading*
-                 (let* ((str ,param-name)
-                        (kwd (intern (subseq str 1 (1- (length str))) :keyword)))
-                   (set-globals kwd ,(if (symbolp val) `',val val))))
+               (unless *ww-loading*  ;only save if ww-set command comes from REPL after loading
+                 (defparameter *keep-globals-p* t)
+                 (save-globals))
                ,(if (symbolp val) `',val val)))
        (*debug*
         (progn (setq *debug* ,(if (symbolp val) `',val val))
@@ -56,4 +45,4 @@
           (setq ,param ,(if (symbolp val) `',val val))
           (format t "~%Please set the parameter ~A in the problem specification file, not in the REPL.~%" ',param)))
        (otherwise
-        (format t "~%~A is not a valid parameter name in ww-set.~%" ',param)))))
+        (format t "~%~A is not a valid parameter name in ww-set.~%" ',param))))

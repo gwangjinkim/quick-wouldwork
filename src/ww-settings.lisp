@@ -59,8 +59,8 @@
 
 
 ;; after loading set the global values to what was in "vals.lisp"
-(defvar *keep-globals-p* nil)   ;; this initializes *keep-globals-p* variable
-(read-globals)                  ;; this overtakes the globals only when
+;(defvar *keep-globals-p* nil)   ;; this initializes *keep-globals-p* variable
+;(read-globals)                  ;; this overtakes the globals only when
                                 ;; keep-globals-p in vals.lisp was set to T
 
 
@@ -92,7 +92,6 @@
 
 (defun eql* (&rest arguments)
   (every #'eql arguments (rest arguments)))
-;(declaim (type ftype (function (&rest list) boolean) eql*))
 
 
 (setq *print-right-margin* 140)
@@ -178,21 +177,12 @@
 (reset-globals '(goal-fn constraint-fn heuristic? prune? bounding-function?))
 ;Reset certain user defined functions, when defined on previous load.
 
-#|
-(when (boundp '*query-names*)
-  (reset-globals *query-names*))
-(when (boundp '*update-names*)
-  (reset-globals *update-names*))
-(when (boundp '*actions*)
-  (reset-globals (mapcar #'action.pre-defun-name *actions*))
-  (reset-globals (mapcar #'action.eff-defun-name *actions*)))
-(when (boundp '*init-actions*)
-  (reset-globals (mapcar #'action.pre-defun-name *init-actions*))
-  (reset-globals (mapcar #'action.eff-defun-name *init-actions*)))
-|#
 
 ;;;;;;;;;;;;;;;;;;;; Global Parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+
+(defparameter *ww-loading* t
+  "Flag to indicate if Wouldwork is currently being loaded. Reset in ww-initialize.lisp")
 
 (define-global *troubleshoot-current-node* nil
   "A flag telling wouldwork to redo the current node for debugging.")
@@ -284,6 +274,7 @@
 
 (define-global *branch* -1
   "If n>0, explore only the nth branch from the *start-state*.")
+
 (unless (boundp '*problem-name*)
   (define-global *problem-name* 'unspecified
     "Name of the current problem, assigned in problem.lisp by user."))
@@ -404,6 +395,3 @@
 
 (define-global *parameter-headers* '(standard product combination dot-product)
   "The different ways values can be combined in a pre-parameter list.")
-
-(defparameter *ww-loading* t
-  "Flag to indicate if Wouldwork is currently being loaded. Reset in ww-initialize.lisp")
