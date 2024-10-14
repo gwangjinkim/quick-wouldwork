@@ -13,28 +13,28 @@ THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
 (run <problem-name>) eg, (run \"blocks3\")
    -- load and solve a problem
 
-(run-test-problems) alias (run-all)
+(run-test-problems) alias (run-test)
    -- solve all test problems
 
 (list-problem-names) alias (list-all)
    -- lists all currently specifed problems
-      in the src directory (use names with run)
+      in the src directory (use these names with run)
 
 (stage <problem-name>) eg, (stage \"blocks3\")
-  -- loads a problem into wouldwork, usually for debugging purposes,
+  -- loads a problem into wouldwork in preparation for solving or debugging,
      without attempting to solve it
 
 (solve)
   -- attempts to solve the currently staged problem
-     with the currently staged parameters
 
 (get-src-folder-path)
    -- the location where all problem specification files should appear
 
 (profile)
-   -- employs a basic profiler on the problem last run
+   -- employs a basic profiler on the currently staged problem,
+      for analyzing the efficiency of action rules in the problem specification
 
-(display-current-parameters) alias (display-all)
+(display-current-parameters) alias (display-params)
    -- displays all parameters associated with the currently staged problem
 
 (ww-set <problem-parameter> <new-value>)
@@ -423,6 +423,7 @@ any such settings appearing in the problem specification file.
 
 ;; alias:
 (setf (fdefinition 'run-all) #'run-test-problems)
+(setf (fdefinition 'run-test) #'run-test-problems)
 
 
 (defparameter *current-problem-name* (string *problem-name*))  ;normally specified in problem.lisp
