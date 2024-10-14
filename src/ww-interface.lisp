@@ -10,8 +10,8 @@
   (format t "~%
 THE LIST OF WOULDWORK COMMANDS RECOGNIZED IN THE REPL:
 
-(run <problem-name>) eg, (run \"blocks3\")
-   -- load and solve a problem
+(run <problem-name>) eg, (run \"blocks3\") ;; can be also symbol (run block3)
+   -- load and solve a problem 
 
 (run-test-problems) alias (run-test)
    -- solve all test problems
@@ -428,8 +428,10 @@ any such settings appearing in the problem specification file.
 
 (defparameter *current-problem-name* (string *problem-name*))  ;normally specified in problem.lisp
 
+(defmacro run (problem-name &key (with-reload-p t))
+  `(%run (string-downcase (format nil "~A" (quote ,problem-name))) :with-reload-p ,with-reload-p))
 
-(defun run (problem-name &key (with-reload-p t))  ; (keep-globals-p nil))
+(defun %run (problem-name &key (with-reload-p t))  ; (keep-globals-p nil))
   "Loads, reloads and solves a single problem."
   (unless (string-equal problem-name *current-problem-name*)
     (setf *debug* 0)
